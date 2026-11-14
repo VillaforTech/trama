@@ -1,0 +1,67 @@
+name: Build Mac artifacts
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-artifacts-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    name: Apple Silicon package
+    # Pin the OS family and architecture instead of following macos-latest.
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      CI: true
+      CSC_IDENTITY_AUTO_DISCOVERY: false
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Confirm the Apple Silicon runner
+        run: test "$(uname -m)" = arm64
+      - name: Use temporary application data
+        run: printf 'TRAMA_DATA_DIR=%s/trama-ci\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Check types
+        run: npm run check
+      - name: Test application behavior
+        run: npm test
+      - name: Build the Mac app, ZIP and DMG
+        run: npm run dist:mac
+      - name: Test the packaged Mac application
+        run: TRAMA_ELECTRON_EXECUTABLE="$GITHUB_WORKSPACE/release/mac-arm64/Trama.app/Contents/MacOS/Trama" npm run test:desktop
+      - name: Calculate archive checksums
+        working-directory: release
+        run: shasum -a 256 ./*.dmg ./*.zip > SHA256SUMS
+      - name: Keep tested Mac artifacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: trama-macos-arm64-${{ github.sha }}
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/SHA256SUMS
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+      - name: Keep failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: macos-failure-${{ github.sha }}
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7

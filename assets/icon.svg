@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="shell" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#333945"/><stop offset="1" stop-color="#171a20"/></linearGradient>
+    <linearGradient id="thread" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e2efb0"/><stop offset="1" stop-color="#a7c85c"/></linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="18" stdDeviation="14" flood-color="#070910" flood-opacity=".5"/></filter>
+  </defs>
+  <rect x="72" y="72" width="880" height="880" rx="200" fill="url(#shell)" stroke="#4b5260" stroke-width="2"/>
+  <g fill="none" stroke-linejoin="round" stroke-width="54" filter="url(#shadow)">
+    <path d="M304 339 512 221 720 339 512 458Z" stroke="#e4e8ed"/>
+    <path d="m304 490 208 118 208-118" stroke="#82938b"/>
+    <path d="m304 643 208 119 208-119-208-118Z" stroke="url(#thread)"/>
+  </g>
+  <path d="M512 459v149" fill="none" stroke="#c4dd77" stroke-width="36" stroke-linecap="round"/>
+</svg>

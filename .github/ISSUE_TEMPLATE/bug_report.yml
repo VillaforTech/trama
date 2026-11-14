@@ -1,0 +1,43 @@
+name: Bug report
+description: Report a broken workflow, an incorrect reference, or lost progress.
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us reproduce the problem with public or synthetic source files. Remove credentials, private repository content, and personal learning notes from anything you share. For a vulnerability, follow SECURITY.md.
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Trama version or commit, operating system, Node version, and browser.
+      placeholder: v0.1.0, macOS, Node 24, Chrome
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Start with the source type and include the actions leading to the problem. A small synthetic repository helps with analysis bugs.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+      description: What should have happened in this investigation?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Observed result
+      description: Include the visible error or an anonymized screenshot. For an incorrect reference, give the expected file and lines from the public or synthetic example.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal source example
+      description: Optional public repository link or short synthetic source that reproduces the problem.

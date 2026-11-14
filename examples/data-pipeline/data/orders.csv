@@ -1,0 +1,7 @@
+order_id,region,units,unit_price_cents,discount_percent,status
+o1,north,3,250,0,completed
+o2,south,2,800,10,completed
+o3,north,1,500,0,completed
+o4,south,4,900,0,cancelled
+o5,north,2,300,25,completed
+o6,south,1,1500,0,completed

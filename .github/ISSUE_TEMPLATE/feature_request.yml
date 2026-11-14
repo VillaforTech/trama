@@ -1,0 +1,32 @@
+name: Feature request
+description: Describe a code-learning task that Trama could support better.
+title: "[Feature] "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: Use a public or fictional example when describing work involving a private repository.
+  - type: textarea
+    id: task
+    attributes:
+      label: What are you trying to understand?
+      description: Describe the task and the part where the current workflow falls short.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: What interaction or result would help you complete that task?
+    validations:
+      required: true
+  - type: textarea
+    id: comparison
+    attributes:
+      label: Current approach
+      description: How do you do this today, and what information or work do you have to reconstruct?
+  - type: textarea
+    id: evidence
+    attributes:
+      label: How would you check that it helps?
+      description: A concrete investigation, source example, or independent practice task is useful.

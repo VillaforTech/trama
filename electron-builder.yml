@@ -1,0 +1,46 @@
+appId: com.villafortech.trama
+productName: Trama
+copyright: Copyright © 2026 Roberto Villafuerte
+asar: true
+directories:
+  output: release
+  buildResources: assets
+files:
+  - dist/**/*
+  - dist-server/**/*
+  - desktop/main.cjs
+  - desktop/preload.cjs
+  - examples/**/*
+  - '!examples/**/__pycache__/**'
+  - '!examples/**/*.pyc'
+  - '!examples/**/*.sqlite*'
+  - package.json
+extraMetadata:
+  main: desktop/main.cjs
+mac:
+  category: public.app-category.developer-tools
+  icon: assets/icon.icns
+  # Seal the complete app without claiming an Apple Developer ID identity.
+  identity: '-'
+  target:
+    - target: dmg
+      arch: [arm64]
+    - target: zip
+      arch: [arm64]
+  extendInfo:
+    NSHumanReadableCopyright: Copyright © 2026 Roberto Villafuerte
+dmg:
+  title: Trama
+  window:
+    width: 560
+    height: 380
+  contents:
+    - x: 155
+      y: 180
+      type: file
+    - x: 405
+      y: 180
+      type: link
+      path: /Applications
+artifactName: '${productName}-${version}-${arch}.${ext}'
+publish: null

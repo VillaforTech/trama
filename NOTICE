@@ -1,0 +1,18 @@
+Trama
+Copyright (c) 2026 Roberto Villafuerte and Trama contributors.
+
+The application's original source and fictional example projects are licensed
+under the MIT License in LICENSE.
+
+LearnHarness (https://github.com/amosblomqvist/learnharness), licensed under
+AGPL-3.0, informed the learning workflow as a conceptual reference. No
+LearnHarness source code, prompts, artwork, or branding are bundled here.
+
+Runtime and development dependencies retain their respective licenses,
+available in their installed packages and upstream repositories. Versioned
+package metadata is recorded in package-lock.json.
+
+The bundled Geist typeface is distributed under the SIL Open Font License 1.1.
+Its license is included at assets/Geist-OFL.txt.
+
+Original icon artwork is included in assets/icon.svg under the project MIT license.

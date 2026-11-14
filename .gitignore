@@ -1,0 +1,25 @@
+node_modules/
+dist/
+dist-server/
+.playwright/
+playwright-report/
+test-results/
+.env
+.env.*
+!.env.example
+*.db
+*.db-shm
+*.db-wal
+*.sqlite*
+.DS_Store
+.trama/
+coverage/
+
+# Rebuilt only from checked-in teaching examples.
+public/examples.json
+__pycache__/
+*.pyc
+!.env.demo
+
+release/
+assets/icon.iconset/
