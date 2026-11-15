@@ -57,6 +57,8 @@ jobs:
         run: npm run build
       - name: Test the Mac desktop shell
         if: runner.os == 'macOS'
+        env:
+          TRAMA_VERIFY_SECURE_STORAGE: '1'
         run: npm run test:desktop
 
   browser:

@@ -148,7 +148,7 @@ export class ChatGPTAuth {
   private readonly now: () => number;
   private readonly secret?: AuthOptions['secret'];
   private readonly verifyKey: ReturnType<typeof createRemoteJWKSet>;
-  private readonly ready: Promise<void>;
+  private ready?: Promise<void>;
   private saved!: AuthState;
   private initializationError?: LearningError;
   private attempt?: Attempt;
@@ -173,13 +173,24 @@ export class ChatGPTAuth {
       [customFetch]: (input, init) => this.transport(input, { ...init, redirect: 'error' }),
       timeoutDuration: 10000,
     });
-    this.ready = this.initialize().catch(() => {
+  }
+
+  private initializeOnce(retry = false): Promise<void> {
+    // Indexing and reading a repository do not need Keychain. Start its access
+    // only when a connection is inspected or explicitly started, never at boot.
+    // Failed status polling stays quiet; only an explicit sign-in retries access.
+    if (retry && this.initializationError) {
+      this.ready = undefined;
+      this.initializationError = undefined;
+    }
+    this.ready ??= this.initialize().catch(() => {
       this.initializationError = error(
         'No se pudieron leer las credenciales de ChatGPT. Revisa el acceso al almacén local.',
         'chatgpt_storage_unavailable',
         503,
       );
     });
+    return this.ready;
   }
 
   private async initialize() {
@@ -196,8 +207,8 @@ export class ChatGPTAuth {
       }
     });
   }
-  private async ensureReady() {
-    await this.ready;
+  private async ensureReady(retry = false) {
+    await this.initializeOnce(retry);
     if (this.initializationError) throw this.initializationError;
   }
   private async read(): Promise<AuthState> {
@@ -298,7 +309,7 @@ export class ChatGPTAuth {
     });
   }
   async status(): Promise<AuthStatus> {
-    await this.ready;
+    await this.initializeOnce();
     let saved = this.saved;
     if (!this.initializationError) {
       try {
@@ -348,7 +359,7 @@ export class ChatGPTAuth {
     let server: Server | undefined;
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
-      await this.ensureReady();
+      await this.ensureReady(true);
       if (generation !== this.generation) return;
       const saved = await this.read();
       const profileId = options.newAccount

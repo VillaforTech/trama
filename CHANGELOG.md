@@ -16,6 +16,10 @@
 - Search and progressively reveal suggested functionalities in the outline and overview.
 - Document a first investigation in English and Spanish, with a clear distinction between reading, model help and practice.
 
+### Mac startup
+
+- Defer account storage until a connection is requested and use asynchronous Keychain operations, keeping repository exploration responsive during an OS permission prompt. Existing credentials remain encrypted; an unavailable keychain does not enable plaintext storage.
+
 ### Maintenance
 
 - Add support and conduct guides, a graph issue form and a maintenance runbook.

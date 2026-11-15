@@ -515,3 +515,97 @@ test('credential storage is unavailable without the desktop bridge and credentia
     await f.cleanup();
   }
 });
+
+test('constructing authentication never opens secure storage; first status initializes once', async () => {
+  const f = await fixture();
+  const calls: string[] = [];
+  try {
+    const auth = new ChatGPTAuth(f.directory, {
+      secret: async (operation, value) => {
+        calls.push(operation);
+        return f.secret(operation, value);
+      },
+    });
+    await delay(10);
+    assert.deepEqual(calls, []);
+    await assert.rejects(stat(join(f.directory, 'chatgpt-auth.json')), { code: 'ENOENT' });
+    assert.equal((await auth.status()).storage, 'encrypted');
+    assert.equal(calls.filter((operation) => operation === 'available').length, 1);
+    await auth.status();
+    assert.equal(calls.filter((operation) => operation === 'available').length, 1);
+  } finally {
+    await f.cleanup();
+  }
+});
+
+test('unavailable storage remains fail-closed during polling and explicit start can retry', async () => {
+  const f = await fixture();
+  let available = false;
+  let checks = 0;
+  try {
+    const auth = new ChatGPTAuth(f.directory, {
+      secret: async (operation, value) => {
+        if (operation === 'available') {
+          checks++;
+          if (!available) throw new Error('fixture permission unavailable');
+        }
+        return f.secret(operation, value);
+      },
+    });
+    const failed = await auth.status();
+    assert.equal(failed.available, false);
+    assert.equal(failed.storage, 'unavailable');
+    assert.equal(failed.errorCode, 'chatgpt_storage_unavailable');
+    await assert.rejects(stat(join(f.directory, 'chatgpt-auth.json')), { code: 'ENOENT' });
+    await auth.status();
+    assert.equal(checks, 1, 'Status polling must not repeat the OS access request');
+    await assert.rejects(
+      auth.withAccess('missing', async () => assert.fail()),
+      (cause: unknown) => (cause as { code: string }).code === 'chatgpt_storage_unavailable',
+    );
+    available = true;
+    const pending = await begin(auth);
+    assert.equal(checks, 2);
+    assert.equal((await auth.status()).storage, 'encrypted');
+    auth.cancel();
+    await pending.done;
+    assert.equal((await auth.status()).phase, 'idle');
+    assert.equal((await auth.status()).authUrl, undefined);
+  } finally {
+    await f.cleanup();
+  }
+});
+
+test('a denied read of an existing encrypted account never replaces its ciphertext', async () => {
+  const f = await fixture();
+  try {
+    const profileId = await f.connect();
+    const authPath = join(f.directory, 'chatgpt-auth.json');
+    const original = await readFile(authPath);
+    let encryptCalls = 0;
+    const locked = new ChatGPTAuth(f.directory, {
+      secret: async (operation, value) => {
+        if (operation === 'decrypt') throw new Error('fixture Keychain read denied');
+        if (operation === 'encrypt') encryptCalls++;
+        return f.secret(operation, value);
+      },
+    });
+    const status = await locked.status();
+    assert.equal(status.available, false);
+    assert.equal(status.storage, 'unavailable');
+    assert.equal(status.connected, false);
+    assert.equal(status.errorCode, 'chatgpt_storage_unavailable');
+    await assert.rejects(
+      locked.withAccess(profileId, async () => assert.fail('Locked credentials must not be used')),
+      (cause: unknown) => (cause as { code: string }).code === 'chatgpt_storage_unavailable',
+    );
+    await assert.rejects(
+      locked.start(),
+      (cause: unknown) => (cause as { code: string }).code === 'chatgpt_storage_unavailable',
+    );
+    assert.equal(encryptCalls, 0);
+    assert.deepEqual(await readFile(authPath), original);
+  } finally {
+    await f.cleanup();
+  }
+});

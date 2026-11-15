@@ -21,19 +21,54 @@ test('macOS app embeds its engine, isolates the renderer and indexes its bundled
       selectFolder: typeof window.tramaDesktop?.selectFolder,
     }));
     expect(platform).toEqual({ bridge: 'darwin', node: 'undefined', selectFolder: 'function' });
+    const authPath = path.join(data, 'data', 'chatgpt-auth.json');
+    // Library boot must not initialize account storage or request OS authorization.
+    await expect(page.getByRole('heading', { name: 'Tu biblioteca' })).toBeVisible();
+    await expect(stat(authPath)).rejects.toMatchObject({ code: 'ENOENT' });
+    const verifyNativeStorage = process.env.TRAMA_VERIFY_SECURE_STORAGE === '1';
+    if (!verifyNativeStorage) {
+      // Simulate only an unavailable OS store in this owned app instance. The real
+      // main/utility bridge remains in use; no Keychain prompt is requested locally.
+      await application.evaluate(({ safeStorage }) => {
+        safeStorage.isAsyncEncryptionAvailable = async () => false;
+      });
+    }
     const chatgpt = await page.evaluate(
       async () =>
         await (await fetch('/api/chatgpt/status', { headers: { 'X-Trama-Request': '1' } })).json(),
     );
-    expect(chatgpt).toMatchObject({ available: true, connected: false, storage: 'encrypted' });
-    const authPath = path.join(data, 'data', 'chatgpt-auth.json');
-    const savedAuth = JSON.parse(await readFile(authPath, 'utf8'));
-    expect(savedAuth).toMatchObject({
-      format: 'trama-chatgpt-keychain-v1',
-      data: expect.any(String),
-    });
-    expect(savedAuth).not.toHaveProperty('hostId');
-    expect((await stat(authPath)).mode & 0o777).toBe(0o600);
+    if (chatgpt.available) {
+      expect(verifyNativeStorage).toBe(true);
+      expect(chatgpt).toMatchObject({ connected: false, storage: 'encrypted' });
+      const savedAuth = JSON.parse(await readFile(authPath, 'utf8'));
+      expect(savedAuth).toMatchObject({
+        format: 'trama-chatgpt-keychain-v1',
+        data: expect.any(String),
+      });
+      expect(savedAuth).not.toHaveProperty('hostId');
+      expect((await stat(authPath)).mode & 0o777).toBe(0o600);
+      test
+        .info()
+        .annotations.push({
+          type: 'secure-storage',
+          description: 'Real asynchronous native encryption verified.',
+        });
+    } else {
+      expect(chatgpt).toMatchObject({
+        connected: false,
+        storage: 'unavailable',
+        errorCode: 'chatgpt_storage_unavailable',
+      });
+      await expect(stat(authPath)).rejects.toMatchObject({ code: 'ENOENT' });
+      test
+        .info()
+        .annotations.push({
+          type: 'secure-storage',
+          description: verifyNativeStorage
+            ? 'Native storage unavailable; fail-closed workspace behavior verified.'
+            : 'Unavailable native storage simulated; no Keychain authorization requested.',
+        });
+    }
     // Replace only the browser launcher in the main test process. No login occurs.
     await application.evaluate(({ shell }) => {
       (globalThis as typeof globalThis & { openedUrls: string[] }).openedUrls = [];

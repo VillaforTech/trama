@@ -347,7 +347,14 @@ test('ChatGPT settings open the official browser flow, confirm plan use and keep
     models: [{ slug: 'example-model', displayName: 'Example model' }],
     phase: 'connected',
   };
-  let current: Record<string, unknown> = disconnected;
+  let current: Record<string, unknown> = {
+    ...disconnected,
+    available: false,
+    phase: 'error',
+    storage: 'unavailable',
+    errorCode: 'chatgpt_storage_unavailable',
+    error: 'Almacén temporalmente no disponible.',
+  };
   await page.addInitScript(() => {
     (window as any).__tramaOpened = [];
     window.tramaDesktop = {
@@ -382,6 +389,9 @@ test('ChatGPT settings open the official browser flow, confirm plan use and keep
   });
   await page.goto('/');
   await page.getByRole('button', { name: 'Configurar modelo', exact: true }).click();
+  await expect(
+    page.getByText('No pudimos abrir el llavero de macOS.', { exact: false }),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Continue with ChatGPT', exact: false }).click();
   await expect
     .poll(() => page.evaluate(() => (window as any).__tramaOpened))
