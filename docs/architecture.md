@@ -61,6 +61,16 @@ The organizer uses deterministic heuristics to recognize source declarations, ro
 
 Local indexing accepts up to 4,000 files, 32 MB of source text, and 512 KB per file. GitHub indexing accepts up to 500 files with the same text and per-file budgets. `.gitignore` and `.tramaignore` rules can exclude source content. Common generated directories, credential filenames, symbolic links, binaries, and detected credential patterns are skipped. The UI exposes truncated trees and incomplete coverage. Larger repositories can require a narrower import or future incremental indexing work.
 
+## Graph projections for large captures
+
+SQLite stores each immutable snapshot, including its file nodes, directed import relations and optional analysis-coverage metadata. `shared/graph.ts` derives bounded views; it neither drops the rest of the stored graph nor runs imported code. There is no separate graph server to install.
+
+The default view groups immediate directories and aggregates cross-group relations. Internal edges remain counted inside collapsed groups. Expanding a directory retains the outside groups it depends on. File search matches captured paths and extracted symbol names; it is not semantic symbol resolution. A neighborhood follows incoming, outgoing or both directions for one or two connections. Its selected file remains pinned on every result page. Cycles use a visited set.
+
+`GraphWorkspace` renders up to 16 nodes and 60 aggregate edges per page, with a list alternative and explicit hidden-result counts. The detail panel opens original import declarations at their source lines. Aggregated evidence samples are labelled as samples; a selected file's complete relation list is paginated separately. A reading process can open the map restricted to its anchored files, then expand into surrounding dependencies.
+
+Directory grouping is a navigation convention. JS/TS imports establish written dependencies; Python matches remain candidates. Neither establishes runtime calls, temporal order, transactions or value flow. Import-resolution statistics describe the analyzer's coverage, not the accuracy of an architectural explanation. The current 4,000-local-file / 500-GitHub-file ingestion limits still apply. Multi-repository semantic indexing and runtime observations require additional adapters and validation.
+
 ## Model-assisted questions
 
 The learning service retrieves source windows using the question and the selected process. It sends at most 30,000 bytes of excerpt context from at most 12 source files. Lines retain their original numbers. Files are treated as untrusted content within the model request.

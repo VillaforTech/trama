@@ -1,12 +1,23 @@
 # Trama
 
+[![CI](https://github.com/VillaforTech/trama/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/VillaforTech/trama/actions/workflows/ci.yml) [![MIT license](https://img.shields.io/badge/license-MIT-c4dd77)](LICENSE)
+
 **Un espacio de trabajo para comprender tu código en Mac.**
 
 Trama es una aplicación de escritorio para Mac que convierte un repositorio en un espacio para investigar su arquitectura, seguir un comportamiento entre archivos y practicar cómo explicarlo por tu cuenta. Abre el proyecto con el selector de carpetas de macOS, explora sus conexiones y conserva lo aprendido junto a sus fuentes.
 
-[Instalar en Mac](#instalar-en-mac) · [English](README.md) · [Arquitectura](docs/architecture.md) · [Investigación](docs/research.md)
+[Probar la demo](https://villafortech.github.io/trama/) · [Instalar en Mac](#instalar-en-mac) · [Empieza aquí](docs/getting-started.md#español-recorrido-de-cinco-minutos) · [English](README.md)
 
 ![Espacio de Trama con una ruta de aprendizaje vinculada al código](docs/images/overview.png)
+
+## Empieza aquí
+
+1. Abre un repositorio o elige **Pedidos → Probar con un ejemplo** en la [demo](https://villafortech.github.io/trama/).
+2. En **Recorrido**, pulsa **Empezar el recorrido** e investiga un comportamiento. Escribe una predicción y contrástala con la fuente.
+3. Usa **Conexiones de código** para recuperar el contexto. Abre una carpeta o las conexiones de un archivo y profundiza por partes.
+4. Resuelve una variante en **Practicar** y conserva las dudas en **Mi cuaderno**.
+
+El [recorrido de cinco minutos](docs/getting-started.md#español-recorrido-de-cinco-minutos) propone una primera tarea concreta. La exploración básica funciona sin conectar IA. Trama es una versión preliminar: las agrupaciones y relaciones sugeridas requieren revisión.
 
 ## Empieza por una pregunta
 
@@ -42,7 +53,7 @@ La [vista previa del navegador](https://villafortech.github.io/trama/) contiene 
 ## Qué puedes hacer
 
 - **Explorar el conjunto.** Ir desde una arquitectura y funcionalidades sugeridas hasta un proceso con archivos y líneas concretas.
-- **Seguir conexiones.** Navegar por el mapa de módulos e inspeccionar la fuente de una relación.
+- **Seguir conexiones.** Ir de grupos de carpetas a archivos, acotar sus dependencias y abrir la evidencia de una relación. Usar una lista cuando resulte más legible que el lienzo.
 - **Buscar en la captura.** Encontrar símbolos y texto entre los archivos indexados.
 - **Practicar razonamiento.** Escribir una predicción, contrastarla con la fuente, explicar una diferencia y resolver una variante. Conservar una autoevaluación de cada intento.
 - **Consultar con fuentes.** Conectar ChatGPT o configurar un modelo local o compatible con OpenAI. Sus referencias se comprueban contra el código capturado.
@@ -75,6 +86,14 @@ Las API keys introducidas en la interfaz permanecen en la memoria del servicio. 
 | `TRAMA_MODEL`          | Identificador del modelo.                                                                                                            |
 | `TRAMA_MODEL_API_KEY`  | Credencial del proveedor desde el entorno.                                                                                           |
 
+## Explorar un repositorio grande
+
+El mapa comienza con una vista organizada por carpetas. Entra en la parte relevante, busca un archivo o símbolo y revisa sus dependencias y los archivos que dependen de él. Puedes acotar la vista y seguir las relaciones progresivamente. Cada proyección informa sus límites y resultados omitidos; la captura conserva más información que la que cabe en el lienzo.
+
+Es un grafo estructural guardado con la captura local en SQLite. Agrupar carpetas describe la ubicación de los archivos, sin certificar límites de arquitectura. Cambiar a una base de grafos no resolvería por sí solo la saturación visual. La implementación actual prioriza vistas acotadas y evidencia localizable. [Investigación y decisiones sobre grafos](docs/research.md#graphs-for-large-codebases)
+
+![Conexiones cercanas de un archivo con referencias a su código](docs/images/connections.png)
+
 ## Fuentes y alcance
 
 Una referencia comprueba dónde está el fragmento citado. Determinar si sostiene la explicación requiere revisarlo. Trama muestra declaraciones visibles, relaciones inferidas y cuestiones abiertas. El mapa representa conexiones estructurales. Una traza de ejecución aporta otro tipo de evidencia.
@@ -105,7 +124,7 @@ Para desarrollar la interfaz con recarga automática, ejecuta `npm run dev` y ab
 
 Puedes contribuir con una mejora del recorrido, una inferencia incorrecta reproducible o una tarea de aprendizaje más clara. Consulta la [guía de contribución](CONTRIBUTING.md), la [arquitectura](docs/architecture.md) y el [roadmap](docs/roadmap.md).
 
-Las comprobaciones y sus límites están en [verificación de la versión](docs/verification.md).
+Las comprobaciones y sus límites están en [verificación de la versión](docs/verification.md). Para preguntas o reportes, consulta [soporte](SUPPORT.md) y las [normas de la comunidad](CODE_OF_CONDUCT.md).
 
 ## Referencias y licencia
 

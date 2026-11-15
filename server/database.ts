@@ -226,6 +226,27 @@ export class Store {
       !Array.isArray(snapshot.graph.edges)
     )
       throw new AppError('La copia carece de un mapa válido.');
+    const analysis = snapshot.graph.analysis;
+    if (
+      analysis !== undefined &&
+      (!analysis ||
+        analysis.version !== 1 ||
+        [
+          'parsedFiles',
+          'candidateFiles',
+          'otherFiles',
+          'unresolvedLocalImports',
+          'externalImports',
+          'dynamicImports',
+        ].some((key) => {
+          const value = (analysis as unknown as Record<string, unknown>)[key];
+          return typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0;
+        }) ||
+        !Array.isArray(analysis.limitations) ||
+        analysis.limitations.length > 100 ||
+        analysis.limitations.some((item) => typeof item !== 'string' || item.length > 4000))
+    )
+      throw new AppError('La cobertura del análisis del mapa es inválida.');
     const paths = new Set(files.map((f) => f.path));
     for (const node of snapshot.graph.nodes)
       if (

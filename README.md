@@ -1,12 +1,23 @@
 # Trama
 
+[![CI](https://github.com/VillaforTech/trama/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/VillaforTech/trama/actions/workflows/ci.yml) [![MIT license](https://img.shields.io/badge/license-MIT-c4dd77)](LICENSE)
+
 **A Mac workspace for understanding your code.**
 
 Trama is a desktop application for Mac that turns a repository into a place to investigate architecture, follow a behavior across files, and practice explaining it yourself. Open a project with the native folder picker, explore its connections, and keep a source-backed record of what you understand.
 
-[Install on Mac](#install-on-mac) · [Español](README.es.md) · [How it works](docs/architecture.md) · [Research](docs/research.md)
+[Try the demo](https://villafortech.github.io/trama/) · [Install on Mac](#install-on-mac) · [Start here](docs/getting-started.md) · [Español](README.es.md)
 
 ![Trama workspace showing a source-backed learning route](docs/images/overview.png)
+
+## Start here
+
+1. Open a repository or choose **Pedidos → Probar con un ejemplo** in the [demo](https://villafortech.github.io/trama/).
+2. In **Recorrido**, choose **Empezar el recorrido** and investigate one behavior. Write a prediction, then inspect the cited code.
+3. Use **Conexiones de código** to recover context. Open a folder or a file's neighborhood rather than trying to read the entire map at once.
+4. Try a changed case in **Practicar** and keep unresolved questions in **Mi cuaderno**.
+
+Follow the [five-minute walkthrough](docs/getting-started.md) for a concrete first task. Basic exploration works without an AI account. Trama is an early preview; the interface uses Spanish, and inferred architecture still needs review.
 
 ## Start with a question
 
@@ -42,7 +53,7 @@ The [browser preview](https://villafortech.github.io/trama/) contains fictional 
 ## What you can do
 
 - **Explore the system.** Start with suggested architecture and functionality, then open a process with file and line references.
-- **Follow relationships.** Navigate the module map and inspect the source behind a connection.
+- **Follow relationships.** Move from folder groups to files, inspect a bounded dependency neighborhood, and open the evidence behind a connection. Use a list when it is easier to read than the canvas.
 - **Search the capture.** Find symbols and text across the indexed files without losing your investigation.
 - **Practice reasoning.** Record a prediction, reveal evidence, explain a mismatch, and try a transfer question. Review attempts later with an explicit self-assessment.
 - **Ask a source-backed question.** Connect ChatGPT, or configure an optional local or OpenAI-compatible model. Replies include references that are checked against the captured source.
@@ -74,6 +85,14 @@ API keys entered in the interface remain in service memory. Endpoint and model p
 | `TRAMA_MODEL_ENDPOINT` | Set the OpenAI-compatible API base URL.                                                                                           |
 | `TRAMA_MODEL`          | Set the model identifier.                                                                                                         |
 | `TRAMA_MODEL_API_KEY`  | Supply the model credential through the environment.                                                                              |
+
+## Explore a large repository
+
+The map begins with an organizational overview. Open the relevant folder, search for a file or symbol, then inspect the selected file's dependencies and dependents. You can change the scope and follow connections progressively. Each visible projection reports its limits and omitted results; the source snapshot is not reduced to what fits on the canvas.
+
+This is a structural source graph stored with the local SQLite snapshot. Folder grouping describes where files live; it does not certify architectural boundaries. Replacing SQLite with a graph database would not by itself make a crowded diagram understandable. The current implementation prioritizes bounded views and source evidence. [Graph research and decisions](docs/research.md#graphs-for-large-codebases)
+
+![Bounded dependency neighborhood with source references](docs/images/connections.png)
 
 ## Evidence and scope
 
@@ -110,7 +129,7 @@ npm run test:e2e
 
 Contributions that improve a source trace, fix a misleading inference, or make a learning task easier to complete are welcome. See [contributing](CONTRIBUTING.md), [architecture](docs/architecture.md), and the [roadmap](docs/roadmap.md).
 
-Engineering checks and their limits are recorded in [release verification](docs/verification.md).
+Engineering checks and their limits are recorded in [release verification](docs/verification.md). For questions or reports, see [support](SUPPORT.md) and the [community conduct](CODE_OF_CONDUCT.md).
 
 ## Acknowledgements and license
 

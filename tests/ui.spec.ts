@@ -494,3 +494,87 @@ test('repository navigation preserves reading when its outline is hidden and kee
   await expect(page.getByRole('heading', { name: 'Tu biblioteca' })).toBeVisible();
   await expect(page.locator('.sidebar')).toHaveCount(0);
 });
+
+test('a 4000-file capture stays bounded and exposes late files, directed neighbors and a keyboard list', async ({
+  page,
+}) => {
+  await openOrders(page);
+  const snapshotId = new URLSearchParams(new URL(page.url()).hash.slice(1)).get('project')!;
+  const original = await (
+    await page.request.get('/api/snapshots/' + snapshotId, { headers: { 'X-Trama-Request': '1' } })
+  ).json();
+  const nodes = Array.from({ length: 4000 }, (_, i) => {
+    const path = `packages/area-${Math.floor(i / 100)}/feature-${String(i).padStart(4, '0')}.ts`;
+    return {
+      id: path,
+      path,
+      label: path.split('/').at(-1),
+      kind: 'module',
+      symbols: [`operation${i}`],
+    };
+  });
+  const edges = [
+    {
+      id: 'late-dependency',
+      source: nodes[3999].id,
+      target: nodes[12].id,
+      kind: 'import',
+      line: 1,
+    },
+    {
+      id: 'late-dependent',
+      source: nodes[3998].id,
+      target: nodes[3999].id,
+      kind: 'import',
+      line: 1,
+    },
+    { id: 'second-hop', source: nodes[12].id, target: nodes[11].id, kind: 'import', line: 1 },
+  ];
+  await page.route('**/api/snapshots/' + snapshotId, (route) =>
+    route.fulfill({
+      json: {
+        ...original,
+        graph: { nodes, edges },
+        coverage: { ...original.coverage, indexed: 4000 },
+      },
+    }),
+  );
+  await page.reload();
+  await page.getByRole('button', { name: 'Conexiones de código', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Conexiones del repositorio' })).toBeVisible();
+  await expect(page.locator('.react-flow__node')).toHaveCount(1);
+  await page.getByLabel('Filtrar mapa').fill('feature-3999');
+  await expect(page.locator('.react-flow__node')).toHaveCount(1);
+  await page.locator('.react-flow__node').click();
+  await page.getByRole('button', { name: 'Ver conexiones', exact: true }).click();
+  await expect(page.locator('.react-flow__node')).toHaveCount(3);
+  await page.getByLabel('Dirección de las conexiones').selectOption('dependencies');
+  await expect(page.locator('.react-flow__node')).toHaveCount(2);
+  await page.getByLabel('Distancia de las conexiones').selectOption('2');
+  await expect(page.locator('.react-flow__node')).toHaveCount(3);
+  await page.getByRole('button', { name: 'Lista', exact: true }).click();
+  await expect(page.getByRole('button', { name: /feature-0011.ts.*operation11/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Repositorio', exact: true }).click();
+  await page.getByRole('button', { name: /packages.*4000 archivos agrupados/ }).click();
+  await page.getByRole('button', { name: 'Abrir carpeta', exact: true }).click();
+  await expect(page.locator('.connections-list > button')).toHaveCount(16);
+  await expect(page.getByText('Página 1 de 3', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Página siguiente del mapa', exact: true }).click();
+  await expect(page.locator('.connections-list > button')).toHaveCount(16);
+  await expect(page.getByText('Página 2 de 3', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Página siguiente del mapa', exact: true }).click();
+  await expect(page.locator('.connections-list > button')).toHaveCount(8);
+  await expect(page.getByText('Página 3 de 3', { exact: true })).toBeVisible();
+});
+
+test('overview guides the next action and a process opens its source scope in the map', async ({
+  page,
+}) => {
+  await openOrders(page);
+  await expect(page.getByRole('heading', { name: 'Empieza por un comportamiento' })).toBeVisible();
+  await page.getByRole('button', { name: 'Empezar el recorrido', exact: true }).click();
+  await expect(page.getByLabel('Tu predicción')).toBeVisible();
+  await page.getByRole('button', { name: 'Ver conexiones de este proceso', exact: true }).click();
+  await expect(page.getByLabel('Ámbito de conexiones')).toHaveValue('initial');
+  await expect(page.getByRole('heading', { name: 'Conexiones del repositorio' })).toBeVisible();
+});

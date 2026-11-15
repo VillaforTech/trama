@@ -133,6 +133,15 @@ test('snapshots survive reload, retain source anchors, reject conflicting writes
         malformed.snapshot.coverage = invalidCoverage as typeof malformed.snapshot.coverage;
         assert.throws(() => alternate.restore(malformed), /cobertura/);
       }
+      for (const analysis of [
+        {},
+        { ...copy.snapshot.graph.analysis, limitations: [null] },
+        { ...copy.snapshot.graph.analysis, parsedFiles: -1 },
+      ]) {
+        const malformed = structuredClone(copy);
+        malformed.snapshot.graph.analysis = analysis as typeof malformed.snapshot.graph.analysis;
+        assert.throws(() => alternate.restore(malformed), /cobertura del análisis/);
+      }
       const ungrounded = structuredClone(copy);
       ungrounded.snapshot.learning.sessions = [
         {
