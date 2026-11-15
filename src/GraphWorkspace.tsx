@@ -124,6 +124,8 @@ export default function GraphWorkspace({ snapshot, onSource, initialPaths }: Pro
     () => nodePositions(projection.nodes, projection.edges, focus),
     [projection, focus],
   );
+  // React Flow owns selection and measured dimensions for this projection.
+  // Replacing controlled nodes on selection hides them between the two clicks.
   const nodes = useMemo<Node[]>(
     () =>
       projection.nodes.map((node) => ({
@@ -143,10 +145,12 @@ export default function GraphWorkspace({ snapshot, onSource, initialPaths }: Pro
         position: positions.get(node.id)!,
         sourcePosition: Position.Right,
         targetPosition: Position.Left,
-        className: `${node.kind === 'directory' ? 'connection-directory' : 'connection-file'} ${node.external ? 'connection-external' : ''} ${selected === node.id ? 'selected-file' : ''}`,
+        // Let node navigation receive double clicks; the empty canvas still zooms.
+        className: `nopan ${node.kind === 'directory' ? 'connection-directory' : 'connection-file'} ${node.external ? 'connection-external' : ''}`,
+        selected: node.id === focus,
         ariaLabel: `${node.kind === 'directory' ? 'Carpeta' : 'Archivo'} ${node.path}, ${node.fileCount} archivos`,
       })),
-    [projection.nodes, positions, selected],
+    [projection.nodes, positions, focus],
   );
   const edges = useMemo<Edge[]>(
     () =>
@@ -367,8 +371,10 @@ export default function GraphWorkspace({ snapshot, onSource, initialPaths }: Pro
             <div className="map-canvas connections-canvas">
               {nodes.length ? (
                 <ReactFlow
-                  key={[scope, focus, query, page, direction, hops, featureScope].join('|')}
-                  nodes={nodes}
+                  key={[snapshot.id, scope, focus, query, page, direction, hops, featureScope].join(
+                    '|',
+                  )}
+                  defaultNodes={nodes}
                   edges={edges}
                   fitView
                   fitViewOptions={{ padding: 0.16, maxZoom: 1 }}
