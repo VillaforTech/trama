@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowUpRight, Check, Loader2, LogOut, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import type { ChatGPTStatus } from '../shared/learning';
 import { DEMO, request } from './api';
 import { Button, Install, Modal } from './components';
+import './settings.css';
 
 export const CHATGPT_USAGE_URL = 'https://chatgpt.com/settings/usage';
 export async function openChatGPTPage(url: string) {
@@ -100,51 +101,40 @@ export default function ChatGPTSettings({ onNotice }: { onNotice: (message: stri
   }
   if (DEMO)
     return (
-      <>
-        <div className="chatgpt-intro">
-          <span className="connection-eyebrow">TU CUENTA, TU PLAN</span>
-          <h3>Usa tu plan de ChatGPT</h3>
+      <section className="chatgpt-preferences" aria-label="Conexión con ChatGPT">
+        <header className="preferences-heading">
+          <h3>ChatGPT</h3>
           <p>
-            La aplicación de Mac permite conectar una cuenta elegible de ChatGPT. Esta vista pública
-            conserva sólo ejemplos y no inicia sesión en tu cuenta.
+            Conecta tu cuenta desde la aplicación de Mac. Esta vista pública sólo contiene ejemplos
+            y no inicia sesión en tu cuenta.
           </p>
-        </div>
+        </header>
         <Install />
-      </>
+      </section>
     );
   return (
-    <section className="chatgpt-settings" aria-label="Conexión con ChatGPT">
-      <div className="chatgpt-intro">
-        <span className="connection-eyebrow">TU CUENTA, TU PLAN</span>
-        <h3>Usa tu plan de ChatGPT</h3>
-        <p>
-          Conecta una cuenta elegible de Plus o Pro. Las consultas usan el uso incluido en tu plan o
-          tus créditos disponibles, sin configurar una clave de API.
-        </p>
-      </div>
+    <section className="chatgpt-settings chatgpt-preferences" aria-label="Conexión con ChatGPT">
+      <header className="preferences-heading">
+        <h3>ChatGPT</h3>
+        <p>Usa una cuenta elegible de Plus o Pro para consultar el código, sin una clave de API.</p>
+      </header>
       {status && !status.available && (
-        <p className="hint">
+        <p className="preferences-availability">
           Conecta ChatGPT desde la aplicación de Mac. En el navegador puedes configurar una API o un
           modelo local.
         </p>
       )}
       {status?.connected ? (
-        <div className="connected-account">
-          <div className="account-heading">
-            <span className="account-avatar" aria-hidden="true">
-              {status.email?.[0]?.toUpperCase() || 'C'}
+        <div className="preferences-account">
+          <div className="preferences-identity">
+            <strong>{status.email || 'Cuenta de ChatGPT conectada'}</strong>
+            <span className={status.sharing ? 'preferences-connected' : ''}>
+              {status.sharing ? 'Usando tu plan de ChatGPT' : 'Falta autorizar el uso del plan'}
             </span>
-            <div>
-              <strong>{status.email || 'Cuenta de ChatGPT conectada'}</strong>
-              <span>
-                {status.sharing ? 'Usando tu plan de ChatGPT' : 'Falta autorizar el uso del plan'}
-              </span>
-            </div>
-            <ShieldCheck size={19} />
           </div>
           {status.sharing && (
-            <label className="field">
-              Modelo disponible para esta cuenta
+            <label className="preferences-model">
+              <span>Modelo disponible para esta cuenta</span>
               <select
                 value={status.model}
                 disabled={busy || status.phase === 'connecting' || !status.models.length}
@@ -176,20 +166,20 @@ export default function ChatGPTSettings({ onNotice }: { onNotice: (message: stri
               </select>
             </label>
           )}
-          <div className="form-actions">
-            <Button
+          <div className="preferences-account-actions">
+            <button
+              className="text-button"
               onClick={() =>
                 void openChatGPTPage(CHATGPT_USAGE_URL).catch((e) => setError(e.message))
               }
             >
-              Gestionar uso <ArrowUpRight size={14} />
-            </Button>
+              Gestionar uso
+            </button>
             <button
               className="text-button"
               disabled={busy}
               onClick={() => void action('/chatgpt/disconnect')}
             >
-              <LogOut size={14} />
               Desconectar de Trama
             </button>
             <button
@@ -201,30 +191,29 @@ export default function ChatGPTSettings({ onNotice }: { onNotice: (message: stri
             </button>
           </div>
           {!status.sharing && (
-            <Button disabled={busy} onClick={() => void connect()}>
-              Autorizar el uso del plan <ArrowUpRight size={14} />
+            <Button primary disabled={busy} onClick={() => void connect()}>
+              Autorizar el uso del plan
             </Button>
           )}
         </div>
       ) : (
         status?.phase !== 'connecting' && (
           <button
-            className="chatgpt-signin"
+            className="chatgpt-signin preferences-signin"
             onClick={() => void connect()}
             disabled={busy || !status?.available}
           >
-            {busy ? <Loader2 size={16} className="spin" /> : null}Continue with ChatGPT{' '}
-            <ArrowUpRight size={15} />
+            {busy ? <Loader2 size={16} className="spin" /> : null}Continue with ChatGPT
           </button>
         )
       )}
       {status?.phase === 'connecting' && (
-        <div className="connection-pending" role="status">
-          <Loader2 size={17} className="spin" />
+        <div className="preferences-pending" role="status">
+          <Loader2 size={15} className="spin" />
           <div>
             <strong>Completa el acceso en tu navegador</strong>
             <p>La contraseña y la autorización se gestionan en OpenAI.</p>
-            <div className="form-actions">
+            <div className="preferences-inline-actions">
               {status.authUrl && (
                 <button
                   className="text-button"
@@ -232,7 +221,7 @@ export default function ChatGPTSettings({ onNotice }: { onNotice: (message: stri
                     void openChatGPTPage(status.authUrl!).catch((e) => setError(e.message))
                   }
                 >
-                  Abrir de nuevo <ArrowUpRight size={13} />
+                  Abrir de nuevo
                 </button>
               )}
               <button className="text-button" onClick={() => void action('/chatgpt/cancel')}>
@@ -243,47 +232,59 @@ export default function ChatGPTSettings({ onNotice }: { onNotice: (message: stri
         </div>
       )}
       {(error || status?.error) && (
-        <div className="connection-error">
+        <div className="preferences-error">
           <p className="error" role="alert">
             {error || status?.error}
           </p>
-          {status?.errorCode?.includes('usage') && (
-            <Button
-              onClick={() =>
-                void openChatGPTPage(CHATGPT_USAGE_URL).catch((e) => setError(e.message))
-              }
-            >
-              Gestionar uso <ArrowUpRight size={14} />
-            </Button>
-          )}
-          <button className="text-button" onClick={() => void refresh(true)}>
-            <RefreshCw size={13} />
-            Actualizar estado
-          </button>
+          <div className="preferences-inline-actions">
+            {status?.errorCode?.includes('usage') && (
+              <button
+                className="text-button"
+                onClick={() =>
+                  void openChatGPTPage(CHATGPT_USAGE_URL).catch((e) => setError(e.message))
+                }
+              >
+                Gestionar uso
+              </button>
+            )}
+            <button className="text-button" onClick={() => void refresh(true)}>
+              Actualizar estado
+            </button>
+          </div>
         </div>
       )}
-      <p className="footnote">
-        Trama no recibe tu contraseña ni acceso a tus conversaciones de ChatGPT. Cada consulta envía
-        a OpenAI la pregunta y los fragmentos de código que necesita. Los límites dependen de tu
-        cuenta y de la autorización de la aplicación.
-      </p>
-      <p className="footnote">
-        Sin cambios automáticos a facturación por API. Puedes retirar el acceso desde la
-        configuración de ChatGPT.
-      </p>
+      <dl className="preferences-details">
+        <div>
+          <dt>Cuenta</dt>
+          <dd>
+            Trama no recibe tu contraseña ni acceso a tus conversaciones. Puedes retirar el acceso
+            desde la configuración de ChatGPT.
+          </dd>
+        </div>
+        <div>
+          <dt>Uso</dt>
+          <dd>
+            Las consultas consumen la cuota incluida en tu plan o tus créditos disponibles, según
+            los límites de tu cuenta. Sin cambios automáticos a facturación por API.
+          </dd>
+        </div>
+        <div>
+          <dt>Código</dt>
+          <dd>Cada consulta envía a OpenAI la pregunta y los fragmentos de código que necesita.</dd>
+        </div>
+      </dl>
       {welcome && (
         <Modal title="Estás usando tu plan de ChatGPT" onClose={() => void acknowledge()}>
           <p>
             Las consultas elegibles de Trama usarán el uso incluido en tu plan de ChatGPT o tus
             créditos disponibles. Puedes revisar y gestionar el consumo en cualquier momento.
           </p>
-          <div className="form-actions">
+          <div className="form-actions preferences-welcome-actions">
             <Button primary onClick={() => void acknowledge()}>
-              <Check size={15} />
               Entendido
             </Button>
             <button className="text-button" onClick={() => void openChatGPTPage(CHATGPT_USAGE_URL)}>
-              Gestionar uso <ArrowUpRight size={14} />
+              Gestionar uso
             </button>
           </div>
         </Modal>

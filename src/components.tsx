@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useId, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, useId, type ReactNode } from 'react';
 import {
   ArrowUpRight,
   X,
@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import type { Anchor, Snapshot, SourceFile } from '../shared/types';
 import { api, DEMO } from './api';
+import './inspector.css';
 
 export const REPO = 'https://github.com/VillaforTech/trama';
 export const stateLabel = {
@@ -160,6 +161,61 @@ export function SourcePanel({
 }) {
   const [file, setFile] = useState<SourceFile | null>(null),
     [error, setError] = useState('');
+  const [isInspector, setIsInspector] = useState(
+    () => window.matchMedia('(min-width: 1200px)').matches,
+  );
+  const inspectorRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const codeRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(
+    document.activeElement instanceof HTMLElement ? document.activeElement : null,
+  );
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const closeSource = useCallback(() => {
+    const trigger = triggerRef.current;
+    onCloseRef.current();
+    requestAnimationFrame(() => {
+      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
+    });
+  }, []);
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 1200px)');
+    const update = () => setIsInspector(media.matches);
+    media.addEventListener('change', update);
+    update();
+    return () => media.removeEventListener('change', update);
+  }, []);
+  useEffect(() => {
+    // A second citation can update an open inspector without pulling focus away
+    // from the reading. Closing returns to that most recent outside trigger.
+    const active = document.activeElement;
+    if (
+      isInspector &&
+      active instanceof HTMLElement &&
+      active !== document.body &&
+      active.isConnected &&
+      !inspectorRef.current?.contains(active)
+    ) {
+      triggerRef.current = active;
+    }
+  }, [anchor, isInspector]);
+  useEffect(() => {
+    if (!isInspector) return;
+    closeButtonRef.current?.focus({ preventScroll: true });
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.key === 'Escape' &&
+        !event.defaultPrevented &&
+        !document.querySelector('dialog[open]')
+      ) {
+        event.preventDefault();
+        closeSource();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isInspector, closeSource]);
   useEffect(() => {
     let alive = true;
     setFile(null);
@@ -177,12 +233,23 @@ export function SourcePanel({
     };
   }, [snapshot.id, anchor.path]);
   useEffect(() => {
-    document.querySelector('.code-line.selected')?.scrollIntoView({ block: 'center' });
-  }, [file, anchor.line]);
+    const container = codeRef.current;
+    const selected = container?.querySelector<HTMLElement>('.code-line.selected');
+    if (!container || !selected) return;
+    const position =
+      selected.getBoundingClientRect().top -
+      container.getBoundingClientRect().top +
+      container.scrollTop -
+      container.clientTop;
+    container.scrollTop = Math.max(
+      0,
+      position - (container.clientHeight - selected.offsetHeight) / 2,
+    );
+  }, [file, anchor.line, isInspector]);
   const external =
     anchor.url && /^https:\/\/github\.com\//.test(anchor.url) ? anchor.url : undefined;
-  return (
-    <Modal title="Leer la fuente" onClose={onClose} wide>
+  const content = (
+    <>
       <div className="source-head">
         <div>
           <strong>{anchor.path}</strong>
@@ -203,7 +270,7 @@ export function SourcePanel({
       ) : !file ? (
         <p className="muted">Abriendo el archivo…</p>
       ) : (
-        <div className="code-window" tabIndex={0}>
+        <div className="code-window" tabIndex={0} ref={codeRef}>
           {file.text.split(/\r\n|\r|\n/).map((text, i) => (
             <div
               key={i}
@@ -221,6 +288,31 @@ export function SourcePanel({
         El fragmento pertenece a esta captura. Las decisiones que dependen del entorno se comprueban
         con su configuración o una ejecución.
       </p>
+    </>
+  );
+  return isInspector ? (
+    <aside
+      className="source-inspector"
+      role="complementary"
+      aria-label="Código de referencia"
+      ref={inspectorRef}
+    >
+      <header className="source-inspector-heading">
+        <h2>Leer la fuente</h2>
+        <button
+          aria-label="Cerrar"
+          className="icon-button"
+          onClick={closeSource}
+          ref={closeButtonRef}
+        >
+          <X size={18} />
+        </button>
+      </header>
+      <div className="source-inspector-content">{content}</div>
+    </aside>
+  ) : (
+    <Modal title="Leer la fuente" onClose={closeSource} wide>
+      {content}
     </Modal>
   );
 }

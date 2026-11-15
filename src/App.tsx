@@ -1,28 +1,20 @@
 import CommandPalette from './CommandPalette';
+import LibraryHome from './LibraryHome';
+import './workbench.css';
 import { useEffect, useRef, useState } from 'react';
 import {
   ArrowRight,
   ArrowUpRight,
-  BookOpen,
-  Boxes,
   Check,
   ChevronDown,
-  Code2,
   Download,
-  FileCode2,
   FolderOpen,
-  GitBranch,
   Github,
-  History,
   Layers,
   Loader2,
   LockKeyhole,
-  Map,
   Plus,
-  RefreshCw,
   Search,
-  Settings2,
-  Sparkles,
   Upload,
   X,
   Trash2,
@@ -37,17 +29,7 @@ import type {
   Snapshot,
   Unit,
 } from '../shared/types';
-import {
-  Button,
-  Citation,
-  Empty,
-  Install,
-  Logo,
-  Modal,
-  Mode,
-  REPO,
-  SourcePanel,
-} from './components';
+import { Button, Citation, Empty, Install, Modal, REPO, SourcePanel } from './components';
 import {
   Reader,
   Practice,
@@ -76,6 +58,23 @@ const examples: Example[] = [
 export default function App() {
   const desktop = window.tramaDesktop;
   const [commandOpen, setCommandOpen] = useState(false);
+  const [outlineHidden, setOutlineHidden] = useState(false);
+  const projectMenu = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const outside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !projectMenu.current?.contains(event.target))
+        projectMenu.current?.removeAttribute('open');
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') projectMenu.current?.removeAttribute('open');
+    };
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('pointerdown', outside);
+      document.removeEventListener('keydown', escape);
+    };
+  }, []);
   const [projects, setProjects] = useState<ProjectSummary[]>([]),
     [snapshot, setSnapshot] = useState<Snapshot | null>(null),
     [learning, setLearning] = useState<Learning>({});
@@ -311,164 +310,191 @@ export default function App() {
   const activeUnit = snapshot?.plan.features.find((x) => x.id === unitId);
   const activeProcess = activeUnit?.processes.find((x) => x.id === processId);
   const nav = [
-    { id: 'overview', title: 'Recorrido', icon: BookOpen },
-    { id: 'map', title: 'Conexiones de código', icon: Map },
-    { id: 'files', title: 'Código y fuentes', icon: FileCode2 },
-    { id: 'practice', title: 'Practicar', icon: Sparkles },
-    { id: 'notebook', title: 'Mi cuaderno', icon: Layers },
+    { id: 'overview', title: 'Recorrido' },
+    { id: 'map', title: 'Conexiones de código' },
+    { id: 'files', title: 'Código y fuentes' },
+    { id: 'practice', title: 'Practicar' },
+    { id: 'notebook', title: 'Mi cuaderno' },
   ] as const;
   const feedback = (err: unknown) => setError((err as Error).message);
   return (
     <div
       className={
-        'app ' + (desktop ? 'native-desktop ' : '') + (snapshot ? 'has-project' : 'library-app')
+        'app ' +
+        (desktop ? 'native-desktop ' : '') +
+        (snapshot ? 'has-project' : 'library-app') +
+        (outlineHidden ? ' outline-hidden' : '') +
+        (source ? ' source-open' : '')
       }
     >
       <a className="skip" href="#main">
         Saltar al contenido
       </a>
       <header className="app-header">
-        <button className="brand" onClick={goHome} aria-label="Trama, inicio">
-          <Logo />
-        </button>
-        <button className="command-trigger" onClick={() => setCommandOpen(true)}>
-          <Search size={14} />
-          <span>Buscar o ir a…</span>
-          <kbd>⌘ K</kbd>
-        </button>
+        <div className="window-leading">
+          <button className="brand" onClick={goHome} aria-label="Trama, inicio">
+            Trama
+          </button>
+          {snapshot && (
+            <button className="library-back" onClick={goHome}>
+              Biblioteca
+            </button>
+          )}
+        </div>
+        {snapshot && (
+          <button className="window-project" onClick={() => setDialog('library')}>
+            <span>{snapshot.name}</span>
+            <ChevronDown size={12} />
+          </button>
+        )}
         <div className="header-actions">
-          <a className="text-button github-link" href={REPO} target="_blank" rel="noreferrer">
-            <Github size={16} />
-            <span>GitHub</span>
-            <ArrowUpRight size={13} />
-          </a>
+          <button className="command-trigger" onClick={() => setCommandOpen(true)}>
+            <Search size={14} />
+            <span>Buscar</span>
+            <kbd>⌘ K</kbd>
+          </button>
           <button
-            className="icon-button"
+            className="toolbar-text"
             aria-label="Configurar modelo"
             onClick={() => setDialog('settings')}
           >
-            <Settings2 size={18} />
+            Ajustes
           </button>
-          {DEMO && (
-            <Button onClick={() => setDialog('install')}>
-              Instalar <Download size={14} />
-            </Button>
-          )}
+          {DEMO && <Button onClick={() => setDialog('install')}>Instalar</Button>}
         </div>
       </header>
       {snapshot && (
-        <aside className={'sidebar ' + (menu ? 'open' : '')}>
-          <button className="project-switch" onClick={() => setDialog('library')}>
-            <span className="project-monogram">{snapshot.name.slice(0, 1).toUpperCase()}</span>
-            <span>
-              <b>{snapshot.name}</b>
-              <small>{snapshot.source === 'example' ? 'Proyecto de ejemplo' : 'Mi proyecto'}</small>
-            </span>
-            <ChevronDown size={14} />
-          </button>
-          <nav aria-label="Proyecto">
-            {nav.map((item) => (
+        <>
+          <div className="workspace-toolbar">
+            <div className="outline-control">
               <button
-                key={item.id}
-                className={
-                  view === item.id || (view === 'read' && item.id === 'overview') ? 'active' : ''
-                }
-                onClick={() => changeView(item.id)}
+                onClick={() => setOutlineHidden(!outlineHidden)}
+                aria-expanded={!outlineHidden}
               >
-                <item.icon size={17} />
-                {item.title}
+                {outlineHidden ? 'Mostrar índice' : 'Ocultar índice'}
               </button>
-            ))}
-          </nav>
-          <div className="sidebar-route">
-            <span>Tu lectura</span>
-            {activeUnit ? (
-              <button onClick={() => changeView('read')}>
-                <GitBranch size={15} />
-                <span>
-                  {activeUnit.title}
-                  <small>{activeProcess?.title}</small>
-                </span>
-                <ArrowRight size={13} />
-              </button>
-            ) : (
-              <p>Elige una funcionalidad para entrar en el código.</p>
-            )}
+            </div>
+            <nav className="workspace-tabs" aria-label="Proyecto">
+              {nav.map((item) => (
+                <button
+                  key={item.id}
+                  aria-current={
+                    view === item.id || (view === 'read' && item.id === 'overview')
+                      ? 'page'
+                      : undefined
+                  }
+                  className={
+                    view === item.id || (view === 'read' && item.id === 'overview') ? 'active' : ''
+                  }
+                  onClick={() => changeView(item.id)}
+                >
+                  {item.title}
+                </button>
+              ))}
+            </nav>
+            <details className="project-actions" ref={projectMenu}>
+              <summary>
+                Proyecto <ChevronDown size={12} />
+              </summary>
+              <div className="project-actions-menu">
+                <button
+                  onClick={(e) => {
+                    e.currentTarget.closest('details')?.removeAttribute('open');
+                    setDialog('versions');
+                  }}
+                >
+                  Revisiones
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.currentTarget.closest('details')?.removeAttribute('open');
+                    void exportNotebook();
+                  }}
+                >
+                  Descargar cuaderno
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.currentTarget.closest('details')?.removeAttribute('open');
+                    setDialog('scope');
+                  }}
+                >
+                  Alcance de la lectura
+                </button>
+                <hr />
+                <button
+                  onClick={(e) => {
+                    e.currentTarget.closest('details')?.removeAttribute('open');
+                    setDialog('import');
+                  }}
+                >
+                  Abrir otro proyecto
+                </button>
+              </div>
+            </details>
           </div>
-          <div className="sidebar-bottom">
-            <button onClick={() => setDialog('import')}>
-              <Plus size={16} />
-              Abrir otro proyecto
+          <aside
+            className={'sidebar project-outline ' + (menu ? 'open' : '')}
+            aria-label="Índice del repositorio"
+          >
+            <div className="outline-heading">
+              <span>Índice del repositorio</span>
+              <span>{snapshot.plan.features.length}</span>
+            </div>
+            <button
+              className={'outline-overview ' + (view === 'overview' ? 'selected' : '')}
+              onClick={() => changeView('overview')}
+            >
+              Visión general
             </button>
-            <button onClick={() => setDialog('versions')}>
-              <History size={16} />
-              Revisiones
-            </button>
-            <button onClick={exportNotebook}>
-              <Download size={16} />
-              Descargar cuaderno
-            </button>
-            <div className="snapshot-meta">
-              <LockKeyhole size={13} />
-              <span>
-                {snapshot.files.length} archivos · <code>{snapshot.revision.slice(0, 7)}</code>
-                <small>
-                  {saveIssue
-                    ? 'Borrador pendiente de guardar'
-                    : saving
-                      ? 'Guardando…'
-                      : 'Cuaderno guardado localmente'}
-                </small>
+            <div className="outline-section-title">Funcionalidades</div>
+            <div className="outline-items">
+              {snapshot.plan.features.map((feature) => (
+                <div className="outline-group" key={feature.id}>
+                  <button
+                    className={
+                      'outline-feature ' +
+                      (activeUnit?.id === feature.id && view === 'read' ? 'selected' : '')
+                    }
+                    onClick={() => study(feature)}
+                    title={feature.title}
+                  >
+                    <ChevronDown
+                      size={12}
+                      className={activeUnit?.id === feature.id ? 'expanded' : ''}
+                    />
+                    <span>{feature.title}</span>
+                  </button>
+                  {activeUnit?.id === feature.id &&
+                    feature.processes.map((process) => (
+                      <button
+                        className={
+                          'outline-process ' +
+                          (processId === process.id && view === 'read' ? 'current' : '')
+                        }
+                        key={process.id}
+                        onClick={() => changeView('read', feature.id, process.id, 0)}
+                      >
+                        <span>{process.title}</span>
+                      </button>
+                    ))}
+                </div>
+              ))}
+            </div>
+            <div className="outline-status">
+              <button onClick={() => setDialog('scope')}>
+                {snapshot.files.length} archivos · {snapshot.revision.slice(0, 7)}
+              </button>
+              <span role="status">
+                {saveIssue
+                  ? 'Borrador pendiente de guardar'
+                  : saving
+                    ? 'Guardando…'
+                    : 'Cuaderno guardado localmente'}
               </span>
             </div>
-          </div>
-        </aside>
-      )}
-      {!snapshot && (
-        <aside className="sidebar home-sidebar">
-          <div className="sidebar-label">Espacio personal</div>
-          <nav aria-label="Biblioteca">
-            <button className="active" onClick={goHome}>
-              <BookOpen size={17} />
-              Biblioteca
-            </button>
-            <button onClick={() => setCommandOpen(true)}>
-              <Search size={17} />
-              Buscar en Trama
-            </button>
-          </nav>
-          <div className="sidebar-projects">
-            <span>Proyectos</span>
-            {projects.slice(0, 6).map((p) => (
-              <button key={p.id} onClick={() => openSnapshot(p.latestSnapshotId).catch(feedback)}>
-                <span className="repo-dot" />
-                {p.name}
-              </button>
-            ))}
-            <button onClick={openFolder}>
-              <Plus size={14} />
-              Abrir carpeta
-            </button>
-          </div>
-          <div className="sidebar-bottom">
-            <button onClick={() => setDialog('settings')}>
-              <Settings2 size={16} />
-              Conexión de IA
-            </button>
-            <a className="text-button" href={REPO} target="_blank" rel="noreferrer">
-              <Github size={16} />
-              Proyecto en GitHub
-              <ArrowUpRight size={12} />
-            </a>
-            <div className="snapshot-meta">
-              <LockKeyhole size={13} />
-              <span>
-                {DEMO ? 'Ejemplos públicos de aprendizaje' : 'Espacio local en este Mac'}
-                <small>Trama · Código abierto</small>
-              </span>
-            </div>
-          </div>
-        </aside>
+          </aside>
+        </>
       )}
       <main id="main" className={snapshot ? 'workspace' : 'home'}>
         {snapshot && (
@@ -512,166 +538,24 @@ export default function App() {
             <p className="muted">Leyendo archivos y conectando las piezas de tu proyecto.</p>
           </section>
         ) : !snapshot ? (
-          <>
-            <div className="library-heading">
-              <div>
-                <div className="breadcrumb">
-                  Espacio personal <span>/</span> Biblioteca
-                </div>
-                <h1>Tu biblioteca</h1>
-                <p>Un lugar para entender el software con el que trabajas.</p>
-              </div>
-              <div className="library-heading-actions">
-                <Button
-                  onClick={() => {
-                    setImportKind('github');
-                    setDialog('import');
-                  }}
-                >
-                  <Github size={15} />
-                  GitHub
-                </Button>
-                <Button primary onClick={openFolder}>
-                  <FolderOpen size={15} />
-                  {DEMO ? 'Descargar para Mac' : 'Abrir carpeta'}
-                </Button>
-              </div>
-            </div>
-            <section className="project-shelf">
-              <div className="section-title">
-                <h2>Proyectos recientes</h2>
-                <button className="text-button" onClick={() => backupInput.current?.click()}>
-                  <Upload size={13} />
-                  Restaurar cuaderno
-                </button>
-              </div>
-              {projects.length ? (
-                projects.map((p) => (
-                  <button
-                    className="project-row"
-                    key={p.id}
-                    onClick={() => openSnapshot(p.latestSnapshotId).catch(feedback)}
-                  >
-                    <span className="icon-tile">
-                      <FolderOpen size={18} />
-                    </span>
-                    <span>
-                      <b>{p.name}</b>
-                      <small>
-                        {p.fileCount} archivos ·{' '}
-                        {p.source === 'example' ? 'Ejemplo incluido' : 'Captura local'}
-                      </small>
-                    </span>
-                    <span className="project-date">
-                      {new Date(p.updatedAt).toLocaleDateString('es', {
-                        day: 'numeric',
-                        month: 'short',
-                      })}
-                    </span>
-                    <ArrowUpRight size={15} />
-                  </button>
-                ))
-              ) : (
-                <button className="empty-library" onClick={openFolder}>
-                  <span className="empty-folder">
-                    <FolderOpen size={25} />
-                  </span>
-                  <span>
-                    <b>Abre tu primer repositorio</b>
-                    <small>Tu código, sus conexiones y lo que aprendes sobre él.</small>
-                  </span>
-                  <span className="keyhint">⌘ O</span>
-                </button>
-              )}
-            </section>
-            <section className="starter-layout">
-              <div className="starter-examples">
-                <div className="section-title">
-                  <h2>Prueba una investigación</h2>
-                </div>
-                <p>Dos proyectos pequeños. Preguntas que atraviesan varios archivos.</p>
-                {examples.map((e) => (
-                  <button
-                    key={e.id}
-                    className="project-row"
-                    onClick={() => runJob(() => api.import({ kind: 'example', example: e.id }))}
-                  >
-                    <span className="icon-tile">
-                      {e.id === 'pedidos' ? <GitBranch size={20} /> : <Boxes size={20} />}
-                    </span>
-                    <span>
-                      <b>{e.name}</b>
-                      <small>{e.description}</small>
-                    </span>
-                    <ArrowUpRight size={16} />
-                  </button>
-                ))}
-                <button
-                  className="text-button"
-                  onClick={() => runJob(() => api.import({ kind: 'example', example: 'pedidos' }))}
-                >
-                  Probar con un ejemplo <ArrowRight size={13} />
-                </button>
-              </div>
-              <div className="learning-preview">
-                <div className="preview-top">
-                  <span className="preview-dot" />
-                  pedidos<span>Una petición, varios momentos</span>
-                </div>
-                <div className="preview-flow">
-                  <div>
-                    <span className="preview-node">
-                      <Code2 size={16} />
-                    </span>
-                    <span>
-                      <small>Entrada</small>
-                      <b>POST /pedidos</b>
-                    </span>
-                    <code>{'{ unidades: 3 }'}</code>
-                  </div>
-                  <i />
-                  <div>
-                    <span className="preview-node">
-                      <Boxes size={16} />
-                    </span>
-                    <span>
-                      <small>Transformación</small>
-                      <b>Crear el pedido</b>
-                    </span>
-                    <code>3 × 250</code>
-                  </div>
-                  <i />
-                  <div>
-                    <span className="preview-node">
-                      <Layers size={16} />
-                    </span>
-                    <span>
-                      <small>Estado</small>
-                      <b>Guardar pedido + evento</b>
-                    </span>
-                    <Check size={16} />
-                  </div>
-                </div>
-                <div className="preview-question">
-                  <span>Predice antes de abrir el código</span>
-                  <p>Si falla el evento, ¿queda guardado el pedido?</p>
-                  <button
-                    onClick={() =>
-                      runJob(() => api.import({ kind: 'example', example: 'pedidos' }))
-                    }
-                  >
-                    Investigar este proceso <ArrowRight size={13} />
-                  </button>
-                </div>
-              </div>
-            </section>
-            <footer className="home-footer">
-              <span>Hecho para aprender sobre software real.</span>
-              <a href={REPO + '/blob/main/README.es.md'} target="_blank" rel="noreferrer">
-                Documentación <ArrowUpRight size={12} />
-              </a>
-            </footer>
-          </>
+          <LibraryHome
+            projects={projects}
+            demo={DEMO}
+            onOpen={(id) => {
+              void openSnapshot(id).catch(feedback);
+            }}
+            onOpenFolder={() => {
+              void openFolder();
+            }}
+            onGitHub={() => {
+              setImportKind('github');
+              setDialog('import');
+            }}
+            onRestore={() => backupInput.current?.click()}
+            onExample={(id) => {
+              void runJob(() => api.import({ kind: 'example', example: id }));
+            }}
+          />
         ) : (
           <>
             {view === 'overview' && (
@@ -682,7 +566,7 @@ export default function App() {
                     {snapshot.name}
                     <span>/</span>Recorrido
                   </div>
-                  <h1>Entiende cómo encaja todo.</h1>
+                  <h1>Visión general</h1>
                   <p className="page-description">{snapshot.plan.summary}</p>
                   {snapshot.plan.summarySource && (
                     <Citation
@@ -704,7 +588,6 @@ export default function App() {
                       {snapshot.plan.architecture.map((unit, i) => (
                         <details key={unit.id}>
                           <summary>
-                            <span className="unit-index">{String(i + 1).padStart(2, '0')}</span>
                             <span>{unit.title}</span>
                             <ChevronDown size={15} />
                           </summary>
@@ -745,9 +628,6 @@ export default function App() {
                   <div className="features">
                     {snapshot.plan.features.map((f, i) => (
                       <button key={f.id} onClick={() => study(f)} className="feature-row">
-                        <span className="feature-symbol">
-                          <GitBranch size={19} />
-                        </span>
                         <span>
                           <b>{f.title}</b>
                           <small>
@@ -1024,7 +904,7 @@ export default function App() {
         </Modal>
       )}
       {dialog === 'settings' && (
-        <Modal title="Tu conexión de IA" onClose={() => setDialog('')}>
+        <Modal title="Ajustes de Trama" onClose={() => setDialog('')}>
           <ProviderSettings onNotice={notify} />
         </Modal>
       )}

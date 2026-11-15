@@ -1,25 +1,52 @@
 # Trama interface
 
-Trama is a Mac application for learning a codebase. Its library, compact project rail, source views and command palette are designed as a working environment. The interface currently uses Spanish; labels name tasks rather than agent internals.
+Trama is a Mac workspace for understanding a repository. Navigation follows the project, its functionalities and its processes. The working surface supports reading source, making a prediction and retaining an explanation. The interface uses Spanish and names the learner's task directly.
 
-## Visual direction
+## Visual identity
 
-A graphite shell (#1b1e24), quieter sidebar (#191c21), and pale lime accent (#c4dd77) distinguish navigation from the active learning task. Geist is bundled locally for UI and reading; system monospace handles source and revision identifiers. Headings remain compact. Borders organize content; depth is reserved for dialogs. The original layered icon represents relating parts across levels of a system.
+The graphite and pale lime identity remains. The content surface uses graphite (#1b1e24), the window bar uses a lighter neutral (#292c30), and the project outline uses #24272c. Pale lime (#c4dd77) identifies the active view and selected evidence. Geist is bundled for interface and reading text; system monospace distinguishes source and revision identifiers. The original layered application icon remains part of Trama's identity.
 
-Zed's persistent workspace, Linear's restrained hierarchy, and Raycast's keyboard navigation were studied as interaction references. No artwork, layouts, product copy or identity were copied. LearnHarness informed the learning sequence rather than the visual identity. See the linked sources in [research](docs/research.md).
+Compact headings, aligned text and thin separators establish hierarchy. Depth belongs to menus and dialogs. Icons identify concrete actions where they improve recognition; persistent destinations use text labels. Architecture sections do not need decorative numbers or repeated badges. Step numbers belong where order matters to the explanation.
 
-## Surfaces
+## Window and navigation
 
-- **Library:** recent investigations, one primary folder action, GitHub import, and two runnable learning examples. The public browser preview makes its installation boundary explicit.
-- **Learning route:** architecture suggestions and behaviors become progressively narrower source investigations.
-- **Reader:** a prediction precedes explanation. Source declarations, interpretations and missing evidence have distinct labels. References open exact captured lines.
-- **Connections:** movable file nodes, dependency edges, filtering and neighborhood focus. This is a structural map, not a runtime trace.
-- **Practice:** a committed response precedes the reference answer. Consulted sources and self-assessment are recorded independently.
-- **Notebook:** personal explanations, doubts and attempts persist with a source revision. File changes can be compared before resuming work.
-- **Command palette:** Cmd-K searches actions and source filenames; arrows and Enter navigate, Escape closes. Cmd-O uses the native Mac folder picker; Cmd-comma opens model settings.
+- **Library:** a separate entry surface with recent projects, opening a folder or GitHub repository, and two runnable examples. It has no persistent navigation rail. The public browser preview makes its local-installation boundary explicit.
+- **Window bar:** Trama and the return to Biblioteca sit beside the native window controls. An open project's name identifies the current workspace. Buscar is a compact control with its shortcut; Ajustes is a quiet text action.
+- **Project toolbar:** text tabs select Recorrido, Conexiones de código, Código y fuentes, Practicar and Mi cuaderno. Their position remains stable across project views. The active view has a restrained underline and surface change.
+- **Repository outline:** the left panel lists the selected repository's functionalities and their processes, with indentation, disclosure controls and a current-item state. It includes Visión general and a small revision and saving status. It represents the repository's proposed structure; it is not a conversation history or a second list of application pages.
+- **Project actions:** revisions, notebook export and opening another project are grouped in the project menu. They remain available without occupying permanent rows in the outline.
+- **Focused reading:** Ocultar índice removes the outline and gives its space to the working surface. Mostrar índice restores it. Hiding navigation must preserve the current process, source selection and learning draft.
 
-## Platform behavior
+The distinction between tabs and outline is intentional: tabs select a way of working with the project; the outline selects a part of that project. Opening a process takes the reader into its learning route. Labels and selection states must make that transition apparent.
 
-The Mac window uses native traffic lights, a draggable title bar, native application menus, native file/save dialogs, and a minimal isolated bridge. Application state lives outside the app bundle. Electron embeds the runtime, so the packaged application requires no developer tools. Credential access across signed app updates remains to be verified.
+## Working surfaces
 
-The browser preview adapts below 620px with a collapsible project rail. Source and map regions scroll internally. Focus indicators, labelled dialogs, keyboard commands and reduced-motion behavior are included. Accessibility checks cover library and practice; keyboard and mobile flows have automated tests. These checks do not substitute for a full accessibility evaluation with assistive technology.
+- **Overview:** architecture groups and suggested behaviors provide progressively narrower entry points into the source. Coverage and unresolved evidence remain visible without a large promotional panel.
+- **Reader:** a prediction precedes the explanation. Source declarations, interpretations and missing evidence have distinct labels. References open the exact lines of the captured revision. At widths of 1200 px and above, a nonmodal inspector keeps source alongside the explanation; narrower windows use a focused dialog. Steps run above the document rather than forming another vertical rail. Closing the source restores keyboard focus. The current process remains identifiable when the outline is hidden.
+- **Connections and sources:** the structural map, file browser and source references support the same captured repository. A dependency edge is not presented as an observed execution trace.
+- **Practice:** a committed response precedes the reference answer. Source consultation and self-assessment are recorded separately. The interface does not turn an assisted answer into proof of independent understanding.
+- **Notebook:** explanations, doubts and attempts persist with their source revision. Changed files can be compared before resuming an investigation.
+
+## Preferences and assistance
+
+Ajustes de Trama opens from the window bar or ⌘,. Its ChatGPT and API o modelo local tabs organize the connections already supported. Account status, model choice and connection actions use a compact preferences layout. The account connection is a supporting utility, not a hero section or a destination in the repository outline.
+
+The sign-in action keeps the required **Continue with ChatGPT** label. Eligibility, source transmission, usage management and errors remain understandable after reducing visual prominence. Provider configuration, project import and the learning task retain separate contexts. A source-backed question is opened from its relevant process.
+
+## References and rationale
+
+These are interaction references, not assets to reproduce:
+
+- **Nova** documents a separate Launcher and Workspace, a project toolbar, contextual controls and project-specific settings. This supports separating Trama's library, project actions and working surface. [Launcher](https://help.nova.app/projects/launcher/) · [Workspace](https://help.nova.app/projects/workspace/) · [Project settings](https://help.nova.app/projects/project-settings/)
+- **Things** documents project headings, secondary details revealed within an item and a Slim Mode that preserves navigation while hiding the sidebar. This informed Trama's compact hierarchy and focused reading control. [Organization](https://culturedcode.com/things/features/) · [Slim Mode](https://culturedcode.com/things/support/articles/3238254/)
+- **Bear** distinguishes organization, item selection and editing, with modes that hide the sidebar and note list. This informed keeping reading central while allowing surrounding navigation to recede. [Sidebar](https://bear.app/faq/about-the-sidebar-in-bear/) · [Reading layouts](https://bear.app/faq/hide-the-sidebar-and-note-list-on-mac-and-ipad/)
+
+The documented behaviors are verified reference capabilities. Their application to Trama is a design judgment: the hypothesis is that project-based navigation reduces ambiguity and leaves more attention for reasoning. It requires usability checks with real repositories. These references are not evidence that Trama improves learning. LearnHarness informed the learning sequence; Trama retains its own implementation, copy, examples and visual identity. See the separate [research notes](docs/research.md).
+
+## Platform and validation
+
+The Mac window uses native traffic lights, a draggable title bar, application menus and file dialogs through a restricted bridge. ⌘O opens a repository folder; ⌘K opens quick navigation. The command palette supports arrows, Enter and Escape. The packaged application includes its runtime. Application data lives outside the bundle; credential persistence across signed updates remains unverified.
+
+At narrow browser widths the outline becomes an optional overlay and the text tabs remain horizontally accessible. Source and map regions scroll within their working area. Focus indicators, labelled controls and reduced-motion behavior apply to the shell as well as learning views.
+
+Check the complete path from library to process, source, practice and return; long project and feature names; hidden-outline reading; keyboard navigation; menus and dialogs; and narrow layouts. Confirm that saving and uncertainty remain visible without relying on color. The [verification record](docs/verification.md) reports checks actually completed; the design contract does not substitute for those checks or a full accessibility evaluation.

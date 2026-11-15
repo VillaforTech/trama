@@ -11,7 +11,7 @@ test.beforeEach(async ({ request }) => {
 async function openOrders(page: Page) {
   await page.goto('/');
   await page.getByRole('button', { name: 'Probar con un ejemplo', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Entiende cómo encaja todo.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Visión general' })).toBeVisible();
 }
 
 test('a learner traces a process, saves reasoning, searches evidence and records a practice attempt', async ({
@@ -21,7 +21,10 @@ test('a learner traces a process, saves reasoning, searches evidence and records
   page.on('pageerror', (error) => errors.push(error.message));
   await openOrders(page);
   const snapshotId = new URLSearchParams(new URL(page.url()).hash.slice(1)).get('project')!;
-  await page.getByRole('button', { name: /Solicitudes a \/pedidos/ }).click();
+  await page
+    .getByRole('main')
+    .getByRole('button', { name: /Solicitudes a \/pedidos/ })
+    .click();
   await expect(page.getByLabel('Tu predicción')).toBeVisible();
   await page
     .getByLabel('Tu predicción')
@@ -48,6 +51,7 @@ test('a learner traces a process, saves reasoning, searches evidence and records
   await expect(page.getByRole('heading', { name: 'Leer la fuente' })).toBeVisible();
   await expect(page.locator('.code-line.selected')).toContainText('app.post("/pedidos"');
   await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Abrir archivo', exact: true })).toBeFocused();
 
   await page.getByRole('button', { name: 'Conexiones de código', exact: true }).click();
   await expect(page.locator('.react-flow__node').first()).toBeVisible();
@@ -144,15 +148,19 @@ test('a late tutor response cannot overwrite another project notebook', async ({
       .catch(() => undefined);
   });
   await openOrders(page);
-  await page.getByRole('button', { name: /Solicitudes a \/pedidos/ }).click();
+  await page
+    .getByRole('main')
+    .getByRole('button', { name: /Solicitudes a \/pedidos/ })
+    .click();
   await page.getByRole('button', { name: 'Contrastar con el código', exact: true }).click();
   await page.getByRole('button', { name: 'Profundizar con mi modelo', exact: true }).click();
   await page.getByRole('button', { name: 'Explicar con mi modelo', exact: true }).click();
   await expect.poll(() => !!finish).toBe(true);
   await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
+  await page.locator('.project-actions > summary').click();
   await page.getByRole('button', { name: 'Abrir otro proyecto', exact: true }).click();
   await page.getByRole('button', { name: 'Del CSV al informe', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Entiende cómo encaja todo.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Visión general' })).toBeVisible();
   await page.getByRole('button', { name: 'Mi cuaderno', exact: true }).click();
   const note = page.getByLabel('Mi explicación del sistema');
   await note.fill('Este pipeline conserva mi explicación independiente.');
@@ -193,10 +201,10 @@ test('a failed save survives reload and can be exported before retrying', async 
   const text = 'Esta explicación debe conservarse aunque falle el guardado.';
   await page.getByLabel('Mi explicación del sistema').fill(text);
   await expect(page.getByRole('alert')).toContainText('Fallo temporal de escritura simulado.');
-  await expect(page.locator('.snapshot-meta')).toContainText('Borrador pendiente de guardar');
+  await expect(page.locator('.outline-status')).toContainText('Borrador pendiente de guardar');
   await page.reload();
   await expect(page.getByLabel('Mi explicación del sistema')).toHaveValue(text);
-  await expect(page.locator('.snapshot-meta')).toContainText('Borrador pendiente de guardar');
+  await expect(page.locator('.outline-status')).toContainText('Borrador pendiente de guardar');
   const downloadEvent = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Descargar cuaderno y fuentes', exact: true }).click();
   const saved = await downloadEvent;
@@ -212,7 +220,7 @@ test('a failed save survives reload and can be exported before retrying', async 
       return (await response.json()).learning.notes;
     })
     .toBe(text + ' Ya puedo continuar.');
-  await expect(page.locator('.snapshot-meta')).toContainText('Cuaderno guardado localmente');
+  await expect(page.locator('.outline-status')).toContainText('Cuaderno guardado localmente');
 });
 
 test('the command palette searches files and supports keyboard actions', async ({ page }) => {
@@ -238,9 +246,9 @@ test('the command palette searches files and supports keyboard actions', async (
     'Configurar mi modelo',
   );
   await input.press('Enter');
-  await expect(page.getByRole('heading', { name: 'Tu conexión de IA' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ajustes de Trama' })).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect(page.getByRole('heading', { name: 'Tu conexión de IA' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Ajustes de Trama' })).toHaveCount(0);
 
   await page.keyboard.press('ControlOrMeta+k');
   await input.fill('archivo-inexistente-739105');
@@ -272,7 +280,7 @@ test('the desktop folder action uses the native picker result', async ({ page })
     kind: 'local',
     path: decodeURIComponent(folder),
   });
-  await expect(page.getByRole('heading', { name: 'Entiende cómo encaja todo.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Visión general' })).toBeVisible();
   const id = new URLSearchParams(new URL(page.url()).hash.slice(1)).get('project')!;
   const result = await page.request.get('/api/snapshots/' + id, {
     headers: { 'X-Trama-Request': '1' },
@@ -440,7 +448,10 @@ test('a ChatGPT usage limit does not silently bill the configured API provider',
     });
   });
   await openOrders(page);
-  await page.getByRole('button', { name: /Solicitudes a \/pedidos/ }).click();
+  await page
+    .getByRole('main')
+    .getByRole('button', { name: /Solicitudes a \/pedidos/ })
+    .click();
   await page.getByRole('button', { name: 'Contrastar con el código', exact: true }).click();
   await page.getByRole('button', { name: 'Profundizar con mi modelo', exact: true }).click();
   const explain = page.getByRole('button', { name: 'Explicar con mi modelo', exact: true });
@@ -458,4 +469,28 @@ test('a ChatGPT usage limit does not silently bill the configured API provider',
     model: 'example-model',
   });
   expect(submitted[0]).not.toHaveProperty('expectedEndpoint');
+});
+
+test('repository navigation preserves reading when its outline is hidden and keeps actions contextual', async ({
+  page,
+}) => {
+  await openOrders(page);
+  const outline = page.getByRole('complementary', { name: 'Índice del repositorio' });
+  await outline.getByRole('button', { name: 'Solicitudes a /pedidos', exact: true }).click();
+  await page.getByLabel('Tu predicción').fill('La solicitud deja un evento pendiente.');
+  await page.getByRole('button', { name: 'Ocultar índice', exact: true }).click();
+  await expect(outline).not.toBeVisible();
+  await expect(page.getByLabel('Tu predicción')).toHaveValue(
+    'La solicitud deja un evento pendiente.',
+  );
+  await page.getByRole('button', { name: 'Mostrar índice', exact: true }).click();
+  await expect(outline).toBeVisible();
+  await expect(page.locator('.outline-feature.selected')).toHaveText('Solicitudes a /pedidos');
+  await page.locator('.project-actions > summary').click();
+  await page.getByRole('button', { name: 'Revisiones', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Revisiones del proyecto' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Trama, inicio', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Tu biblioteca' })).toBeVisible();
+  await expect(page.locator('.sidebar')).toHaveCount(0);
 });

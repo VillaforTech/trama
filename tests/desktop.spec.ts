@@ -88,7 +88,7 @@ test('macOS app embeds its engine, isolates the renderer and indexes its bundled
     });
     expect(response.status()).toBe(403);
     await page.getByRole('button', { name: 'Probar con un ejemplo' }).click();
-    await expect(page.getByRole('heading', { name: 'Entiende cómo encaja todo.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Visión general' })).toBeVisible();
     const projects = await page.evaluate(
       async () =>
         await (await fetch('/api/projects', { headers: { 'X-Trama-Request': '1' } })).json(),
@@ -108,7 +108,7 @@ test('macOS app embeds its engine, isolates the renderer and indexes its bundled
         .find((item) => item.accelerator === 'CmdOrCtrl+O')!;
       await (item.click as () => Promise<void>)();
     }, selectedFolder);
-    await expect(page.getByRole('heading', { name: 'Entiende cómo encaja todo.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Visión general' })).toBeVisible();
     await expect
       .poll(async () =>
         page.evaluate(

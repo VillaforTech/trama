@@ -20,7 +20,6 @@ import {
   Loader2,
   Search,
   Settings2,
-  Sparkles,
   Target,
   RefreshCw,
 } from 'lucide-react';
@@ -244,7 +243,6 @@ export function Reader({
               </details>
               <div className="lesson-actions">
                 <button className="text-button" onClick={onTutor}>
-                  <Sparkles size={15} />
                   Profundizar con mi modelo
                 </button>
                 {index < process.steps.length - 1 ? (
@@ -1233,8 +1231,7 @@ export function Tutor({
         }
         onClick={ask}
       >
-        {busy ? <Loader2 size={15} className="spin" /> : <Sparkles size={15} />}Explicar con mi
-        modelo
+        {busy ? <Loader2 size={15} className="spin" /> : null}Explicar con mi modelo
       </Button>
       {error && (
         <p className="error" role="alert">

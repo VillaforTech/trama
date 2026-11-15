@@ -1,0 +1,647 @@
+/* The shell navigates a repository, while the content holds the learning task. */
+.app .app-header {
+  height: 55px;
+  padding: 0 22px;
+  background: #292c30;
+  border-bottom-color: #393d42;
+  gap: 20px;
+}
+.app.native-desktop .app-header {
+  padding-left: 94px;
+}
+.window-leading {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 150px;
+}
+.app .brand {
+  color: #dce0e4;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.library-back {
+  font-size: 12px;
+  color: #b4b9bf;
+  border-left: 1px solid #494e55;
+  padding-left: 18px;
+}
+.window-project {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 28%;
+  font-size: 12px;
+  color: #e0e3e7;
+  font-weight: 600;
+}
+.window-project span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app .header-actions {
+  margin-left: auto;
+  gap: 18px;
+}
+.app .command-trigger {
+  position: static;
+  transform: none;
+  width: auto;
+  background: none;
+  border: 0;
+  padding: 6px 0;
+  gap: 8px;
+  color: #c0c5cb;
+  font-size: 12px;
+}
+.app .command-trigger:hover {
+  color: #fff;
+  background: none;
+}
+.app .command-trigger kbd {
+  border: 0;
+  padding: 0;
+  font-size: 10px;
+  color: #a3aab3;
+}
+.toolbar-text {
+  color: #bfc5cd;
+  font-size: 12px;
+  padding: 6px 0;
+}
+.toolbar-text:hover,
+.library-back:hover {
+  color: #fff;
+}
+.app.library-app .home {
+  margin: 0 auto;
+  max-width: 1200px;
+  padding: 38px 48px 40px;
+}
+.workspace-toolbar {
+  position: sticky;
+  top: 55px;
+  z-index: 18;
+  display: flex;
+  align-items: stretch;
+  height: 43px;
+  background: #25282d;
+  border-bottom: 1px solid #373b42;
+}
+.outline-control {
+  width: 248px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-right: 1px solid #3a3e44;
+}
+.outline-control button {
+  color: #aeb5be;
+  font-size: 11px;
+  padding: 4px 0;
+}
+.workspace-tabs {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  flex: 1;
+  overflow-x: auto;
+  padding: 0 22px;
+  scrollbar-width: none;
+}
+.workspace-tabs button {
+  position: relative;
+  flex: none;
+  color: #b3bac5;
+  font-size: 12px;
+  padding: 0 17px;
+  white-space: nowrap;
+  border-radius: 0;
+}
+.workspace-tabs button:hover {
+  color: #e6e9ef;
+  background: #2e3239;
+}
+.workspace-tabs button.active {
+  color: #edf2e5;
+  background: #202329;
+}
+.workspace-tabs button.active:after {
+  content: '';
+  height: 2px;
+  position: absolute;
+  left: 17px;
+  right: 17px;
+  bottom: 0;
+  background: #c4dd77;
+}
+.project-actions {
+  position: relative;
+  flex: none;
+  align-self: center;
+  margin: 0 20px 0 10px;
+}
+.project-actions summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #c0c6cf;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 7px;
+  list-style: none;
+}
+.project-actions summary::-webkit-details-marker {
+  display: none;
+}
+.project-actions-menu {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  width: 210px;
+  padding: 6px;
+  background: #333840;
+  box-shadow: 0 12px 28px #0006;
+  border-radius: 7px;
+}
+.project-actions-menu button {
+  display: block;
+  text-align: left;
+  padding: 8px 10px;
+  width: 100%;
+  color: #e0e4ea;
+  font-size: 12px;
+  border-radius: 4px;
+}
+.project-actions-menu button:hover {
+  background: #485043;
+}
+.project-actions-menu hr {
+  border: 0;
+  border-top: 1px solid #4b515b;
+  margin: 5px;
+}
+.app .project-outline {
+  position: fixed;
+  top: 98px;
+  bottom: 0;
+  left: 0;
+  width: 248px;
+  display: flex;
+  flex-direction: column;
+  background: #24272c;
+  border-right: 1px solid #3a3e44;
+  padding: 18px 10px 0;
+  overflow: hidden;
+}
+.outline-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 0 10px 17px;
+  color: #b5bbc4;
+  font-size: 11px;
+  font-weight: 500;
+}
+.outline-heading > span:last-child {
+  color: #a2aab5;
+  font-variant-numeric: tabular-nums;
+}
+.outline-overview {
+  text-align: left;
+  padding: 9px 11px;
+  font-size: 12px;
+  color: #d2d7df;
+  border-radius: 4px;
+}
+.outline-overview:hover {
+  background: #32363e;
+}
+.outline-overview.selected {
+  color: #e5eadc;
+  background: #3a4136;
+}
+.outline-section-title {
+  color: #aeb5bf;
+  font-size: 11px;
+  padding: 25px 11px 10px;
+}
+.outline-items {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+.outline-group {
+  padding-bottom: 2px;
+}
+.outline-feature {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  width: 100%;
+  padding: 9px 9px;
+  text-align: left;
+  color: #c1c7d1;
+  font-size: 12px;
+  line-height: 1.55;
+  border-radius: 4px;
+}
+.outline-feature > svg {
+  transform: rotate(-90deg);
+  position: relative;
+  top: 2px;
+  color: #959faa;
+}
+.outline-feature > svg.expanded {
+  transform: none;
+}
+.outline-feature > span {
+  overflow-wrap: anywhere;
+}
+.outline-feature:hover {
+  color: #f2f3f4;
+  background: #30353c;
+}
+.outline-feature.selected {
+  color: #edf1e6;
+  background: #3a4136;
+}
+.outline-process {
+  display: block;
+  width: calc(100% - 27px);
+  margin: 2px 0 3px 27px;
+  text-align: left;
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 5px 8px;
+  border-left: 1px solid #4b535b;
+  color: #aeb7c5;
+}
+.outline-process:hover,
+.outline-process.current {
+  color: #d4dfa9;
+}
+.outline-status {
+  display: grid;
+  gap: 2px;
+  border-top: 1px solid #3a3f47;
+  margin: 0 2px;
+  padding: 14px 8px 18px;
+  font-size: 10px;
+  color: #a3acb8;
+}
+.outline-status button {
+  text-align: left;
+  padding: 0;
+  color: #c1c8d1;
+  font-size: 10px;
+}
+.app .workspace {
+  margin-left: 248px;
+  padding: 31px 44px 55px;
+  max-width: 1500px;
+}
+.app.outline-hidden .project-outline {
+  display: none;
+}
+.app.outline-hidden .workspace {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 1250px;
+}
+.app.outline-hidden .outline-control {
+  width: auto;
+  min-width: 142px;
+}
+.workspace .page-heading h1 {
+  font-size: 27px;
+  font-weight: 550;
+  margin-top: 14px;
+  letter-spacing: -0.025em;
+}
+.workspace .breadcrumb {
+  font-size: 11px;
+  color: #a6b0bd;
+}
+.workspace .breadcrumb > svg {
+  display: none;
+}
+.workspace .section-title h2 {
+  font-size: 16px;
+  font-weight: 550;
+}
+.workspace .overview-layout {
+  display: block;
+}
+.workspace .scope-note {
+  margin-top: 17px;
+  padding: 12px 0;
+  border: 0;
+  border-top: 1px solid #343b45;
+  background: none;
+  border-radius: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 7px 20px;
+}
+.workspace .scope-note .mini-icon {
+  display: none;
+}
+.workspace .scope-note h3 {
+  font-size: 11px;
+  margin: 0;
+  font-weight: 500;
+  color: #c3cbd6;
+}
+.workspace .scope-note p {
+  font-size: 11px;
+  margin: 0;
+  max-width: 58ch;
+  flex: 1;
+  color: #a6b0bd;
+}
+.workspace .scope-note .text-button {
+  margin: 0;
+}
+.workspace .feature-section {
+  margin-top: 28px;
+}
+.workspace .feature-row {
+  padding: 14px 4px;
+  gap: 12px;
+}
+.workspace .feature-row b {
+  font-size: 13px;
+  font-weight: 500;
+}
+.workspace .architecture-list summary {
+  font-size: 13px;
+  padding: 12px 4px;
+}
+.workspace .architecture-list summary > span {
+  flex: 1;
+}
+.workspace .architecture-list summary > svg {
+  margin-left: auto;
+}
+.workspace .features {
+  border-top: 1px solid #343b45;
+}
+.app .modal {
+  background: #272c33;
+  border-radius: 10px;
+  box-shadow: 0 24px 75px #0009;
+  border: 0;
+}
+.app .modal > header {
+  background: #30353d;
+  padding: 17px 22px;
+  border-bottom: 1px solid #444b55;
+}
+.app .modal > header h2 {
+  font-size: 14px;
+  font-weight: 550;
+  letter-spacing: 0;
+}
+.app .modal-content {
+  padding: 24px;
+}
+.app .connection-tabs {
+  margin-bottom: 22px;
+  background: #1f242b;
+  padding: 3px;
+  border-radius: 6px;
+}
+.app .connection-tabs button {
+  min-height: 30px;
+  font-size: 12px;
+  border-radius: 4px;
+}
+.app .connection-tabs button.active {
+  background: #454e59;
+  color: #edf1f6;
+}
+@media (max-width: 1100px) {
+  .app .project-outline,
+  .outline-control {
+    width: 225px;
+  }
+  .app .workspace {
+    margin-left: 225px;
+    padding: 28px;
+  }
+  .workspace-tabs {
+    padding: 0 8px;
+  }
+  .workspace-tabs button {
+    padding: 0 10px;
+    font-size: 11px;
+  }
+  .window-project {
+    max-width: 23%;
+  }
+  .project-actions {
+    margin-right: 10px;
+  }
+}
+@media (max-width: 800px) {
+  .window-project {
+    display: none;
+  }
+  .app.library-app .home {
+    padding: 32px 28px 36px;
+  }
+  .app .project-outline,
+  .outline-control {
+    width: 195px;
+  }
+  .app .workspace {
+    margin-left: 195px;
+    padding: 24px;
+  }
+  .project-actions {
+    margin: 0 7px;
+  }
+  .project-actions summary {
+    font-size: 10px;
+    gap: 4px;
+  }
+  .workspace-tabs button {
+    font-size: 10.5px;
+    padding: 0 8px;
+  }
+}
+@media (max-width: 620px) {
+  .app .app-header {
+    padding: 0 16px;
+    gap: 12px;
+  }
+  .app.native-desktop .app-header {
+    padding-left: 90px;
+  }
+  .window-leading {
+    min-width: 0;
+    gap: 8px;
+  }
+  .library-back {
+    display: none;
+  }
+  .app .header-actions {
+    gap: 15px;
+  }
+  .app .command-trigger {
+    display: flex;
+    position: static;
+    width: auto;
+  }
+  .app .command-trigger span,
+  .app .command-trigger kbd {
+    display: none;
+  }
+  .app .command-trigger svg {
+    width: 15px;
+    height: 15px;
+  }
+  .toolbar-text {
+    font-size: 11px;
+  }
+  .app.library-app .home {
+    margin: 0;
+    padding: 28px 20px 30px;
+  }
+  .outline-control {
+    display: none;
+  }
+  .workspace-tabs {
+    padding: 0 6px;
+  }
+  .workspace-tabs button {
+    padding: 0 11px;
+  }
+  .project-actions {
+    margin: 0 6px;
+  }
+  .app .project-outline,
+  .app.outline-hidden .project-outline {
+    display: none;
+    width: 270px;
+    box-shadow: 12px 8px 24px #0006;
+    z-index: 17;
+  }
+  .app .project-outline.open,
+  .app.outline-hidden .project-outline.open {
+    display: flex;
+  }
+  .app .workspace,
+  .app.outline-hidden .workspace {
+    margin: 0;
+    padding: 18px 20px 40px;
+  }
+  .workspace .page-heading h1 {
+    font-size: 25px;
+  }
+  .workspace .scope-note {
+    display: block;
+  }
+  .workspace .scope-note p {
+    margin: 6px 0;
+  }
+  .app .modal-content {
+    padding: 20px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .app.source-open .workspace {
+    margin-right: min(44vw, 600px);
+    padding: 28px;
+  }
+  .app.source-open.outline-hidden .workspace {
+    margin-left: 0;
+    max-width: none;
+  }
+  .app.source-open .reader {
+    max-width: none;
+  }
+}
+/* A reading sequence runs above the document, rather than adding another rail. */
+.workspace .reader-layout {
+  display: block;
+  max-width: 1000px;
+}
+.workspace .step-rail {
+  position: static;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 12px;
+  align-items: center;
+  margin-bottom: 25px;
+}
+.workspace .step-rail > label {
+  display: block;
+  color: #b2bbc8;
+  font-size: 11px;
+}
+.workspace .step-rail > select {
+  width: min(290px, 100%);
+  margin: 0;
+  background: #292f37;
+  border-color: #454e59;
+  font-size: 12px;
+}
+.workspace .step-rail > p {
+  display: none;
+}
+.workspace .step-rail nav {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 22px;
+  overflow-x: auto;
+  padding: 12px 0;
+  margin: 0;
+  border-bottom: 1px solid #363e49;
+}
+.workspace .step-rail nav button {
+  display: flex;
+  flex: none;
+  align-items: center;
+  max-width: 190px;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.workspace .step-rail nav span {
+  flex: none;
+  width: 21px;
+  height: 21px;
+  font-size: 10px;
+}
+.workspace .lesson {
+  max-width: 820px;
+}
+@media (min-width: 1200px) {
+  .app.source-open .reader-layout {
+    display: block;
+  }
+  .app.source-open .step-rail nav button {
+    max-width: 150px;
+  }
+}
+@media (max-width: 620px) {
+  .workspace .step-rail nav {
+    gap: 14px;
+  }
+  .workspace .step-rail nav button {
+    max-width: 135px;
+  }
+}

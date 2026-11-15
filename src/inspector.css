@@ -1,0 +1,107 @@
+.source-inspector {
+  position: fixed;
+  top: 98px;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  width: min(44vw, 600px);
+  min-height: 0;
+  border-left: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.source-inspector .source-inspector-heading {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px;
+  padding: 12px 16px 12px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.source-inspector .source-inspector-heading h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+.source-inspector .source-inspector-content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 16px 20px;
+}
+
+.source-inspector .source-head {
+  flex: 0 0 auto;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.source-inspector .source-head > div {
+  min-width: 0;
+}
+
+.source-inspector .source-head strong {
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.source-inspector .source-head small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.source-inspector .source-head a {
+  flex-shrink: 0;
+  color: var(--green);
+}
+
+.source-inspector .code-window {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--dark);
+  overscroll-behavior: contain;
+  scrollbar-color: var(--line) var(--dark);
+}
+
+.source-inspector .code-line code {
+  color: var(--ink);
+}
+
+.source-inspector .code-line > span {
+  color: var(--muted);
+}
+
+.source-inspector .code-line.selected {
+  background: color-mix(in srgb, var(--green) 13%, var(--dark));
+}
+
+.source-inspector .footnote {
+  flex: 0 0 auto;
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.source-inspector .icon-button:focus-visible,
+.source-inspector .code-window:focus-visible,
+.source-inspector a:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+}
