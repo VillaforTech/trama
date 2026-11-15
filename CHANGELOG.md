@@ -5,6 +5,7 @@
 ### Repository exploration
 
 - Start with directory groups, expand a folder, and retain its outside dependencies.
+- Keep graph nodes visible during selection so double-clicking opens folders and file connections reliably.
 - Search every captured filename and extracted symbol; page through bounded map views without losing the selected file.
 - Follow dependencies and dependents across one or two connections. Inspect each relation at its source line.
 - Explore the sources of a learning process, or use a keyboard-accessible list.

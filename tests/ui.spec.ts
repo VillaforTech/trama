@@ -588,3 +588,40 @@ test('overview guides the next action and a process opens its source scope in th
   await expect(page.getByLabel('Ámbito de conexiones')).toHaveValue('initial');
   await expect(page.getByRole('heading', { name: 'Conexiones del repositorio' })).toBeVisible();
 });
+
+test('graph selection stays visible and double-click opens directories and file neighborhoods', async ({
+  page,
+}) => {
+  await openOrders(page);
+  await page.getByRole('button', { name: 'Conexiones de código', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Conexiones del repositorio', exact: true }),
+  ).toBeVisible();
+  const location = page.getByRole('navigation', { name: 'Ubicación en el mapa' });
+  const sourceDirectory = page.locator('.react-flow__node[data-id="dir:src"]');
+  await sourceDirectory.dblclick();
+  await expect(location).toContainText('src');
+  await page.locator('.react-flow__node[data-id="src/crear-pedido.js"]').dblclick();
+  await expect(page.locator('.connections-neighborhood')).toContainText('src/crear-pedido.js');
+  await expect(page.getByLabel('Dirección de las conexiones')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Repositorio', exact: true }).click();
+  const scope = page.getByLabel('Ámbito de conexiones');
+  const featureId = await scope
+    .locator('option')
+    .evaluateAll((options) =>
+      options
+        .map((option) => (option as HTMLOptionElement).value)
+        .find((value) => value !== 'all' && value !== 'initial'),
+    );
+  expect(featureId).toBeTruthy();
+  await scope.selectOption(featureId!);
+  await scope.selectOption('all');
+  await sourceDirectory.dblclick();
+  await expect(location).toContainText('src');
+
+  await page.getByRole('button', { name: 'Repositorio', exact: true }).click();
+  await sourceDirectory.click();
+  await expect(sourceDirectory).toHaveClass(/\bselected\b/);
+  await expect(sourceDirectory).toBeVisible();
+});

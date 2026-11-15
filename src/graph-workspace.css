@@ -154,7 +154,7 @@
   border-style: dashed !important;
   background: #282e36 !important;
 }
-.connections-canvas .react-flow__node.selected-file {
+.connections-canvas .react-flow__node.selected {
   border-color: #d0e69d !important;
   background: #3d4734 !important;
   box-shadow: none;
