@@ -259,6 +259,7 @@ test('the desktop folder action uses the native picker result', async ({ page })
     window.tramaDesktop = {
       platform: 'darwin',
       selectFolder: async () => selectedFolder,
+      openExternal: async () => undefined,
       onOpenFolder: () => () => undefined,
       onNavigate: () => () => undefined,
     };
@@ -313,4 +314,148 @@ test('practice records source assistance opened through the command palette', as
       return (await response.json()).learning.attempts?.at(-1);
     })
     .toMatchObject({ answer: prediction, assisted: true, review: 'partial' });
+});
+
+test('ChatGPT settings open the official browser flow, confirm plan use and keep tokens outside the UI', async ({
+  page,
+}) => {
+  const disconnected = {
+    available: true,
+    connected: false,
+    sharing: false,
+    model: '',
+    models: [],
+    phase: 'idle',
+    welcomeSeen: false,
+    usageUrl: 'https://chatgpt.com/settings/usage',
+  };
+  const connected = {
+    ...disconnected,
+    connected: true,
+    sharing: true,
+    profileId: 'synthetic-profile',
+    email: 'learner@example.test',
+    model: 'example-model',
+    models: [{ slug: 'example-model', displayName: 'Example model' }],
+    phase: 'connected',
+  };
+  let current: Record<string, unknown> = disconnected;
+  await page.addInitScript(() => {
+    (window as any).__tramaOpened = [];
+    window.tramaDesktop = {
+      platform: 'darwin',
+      selectFolder: async () => null,
+      onOpenFolder: () => () => {},
+      onNavigate: () => () => {},
+      openExternal: async (url: string) => {
+        (window as any).__tramaOpened.push(url);
+      },
+    };
+  });
+  await page.route('**/api/chatgpt/status', (route) => route.fulfill({ json: current }));
+  await page.route('**/api/chatgpt/connect', async (route) => {
+    current = connected;
+    await route.fulfill({
+      status: 202,
+      json: {
+        ...disconnected,
+        phase: 'connecting',
+        authUrl: 'https://auth.openai.com/api/accounts/authorize?state=synthetic-fixture',
+      },
+    });
+  });
+  await page.route('**/api/chatgpt/welcome', async (route) => {
+    current = { ...connected, welcomeSeen: true };
+    await route.fulfill({ json: current });
+  });
+  await page.route('**/api/chatgpt/disconnect', async (route) => {
+    current = { ...disconnected, welcomeSeen: true };
+    await route.fulfill({ json: current });
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Configurar modelo', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue with ChatGPT', exact: false }).click();
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__tramaOpened))
+    .toEqual(['https://auth.openai.com/api/accounts/authorize?state=synthetic-fixture']);
+  await expect(
+    page.getByRole('heading', { name: 'Estás usando tu plan de ChatGPT', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Entendido', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Estás usando tu plan de ChatGPT', exact: true }),
+  ).toHaveCount(0);
+  await expect(page.getByText('learner@example.test', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Modelo disponible para esta cuenta')).toHaveValue('example-model');
+  await expect(page.locator('body')).not.toContainText('access_token');
+  await page.getByRole('button', { name: 'Gestionar uso', exact: false }).click();
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__tramaOpened))
+    .toContain('https://chatgpt.com/settings/usage');
+  await page.getByRole('button', { name: 'Desconectar de Trama', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Continue with ChatGPT', exact: false }),
+  ).toBeVisible();
+});
+
+test('a ChatGPT usage limit does not silently bill the configured API provider', async ({
+  page,
+}) => {
+  await page.route('**/api/chatgpt/status', (route) =>
+    route.fulfill({
+      json: {
+        available: true,
+        connected: true,
+        sharing: true,
+        profileId: 'synthetic-profile',
+        email: 'learner@example.test',
+        model: 'example-model',
+        models: [{ slug: 'example-model', displayName: 'Example model' }],
+        phase: 'connected',
+        welcomeSeen: true,
+        usageUrl: 'https://chatgpt.com/settings/usage',
+      },
+    }),
+  );
+  await page.route('**/api/provider', (route) =>
+    route.fulfill({
+      json: {
+        endpoint: 'http://127.0.0.1:11434/v1',
+        model: 'other-model',
+        configured: true,
+        hasKey: false,
+        isLocal: true,
+      },
+    }),
+  );
+  const submitted: Record<string, unknown>[] = [];
+  await page.route('**/api/snapshots/*/ask', async (route) => {
+    submitted.push(route.request().postDataJSON());
+    await route.fulfill({
+      status: 429,
+      json: {
+        error: 'Se alcanzó un límite de uso de ChatGPT.',
+        code: 'subscription_sharing_usage_limit_exceeded',
+      },
+    });
+  });
+  await openOrders(page);
+  await page.getByRole('button', { name: /Solicitudes a \/pedidos/ }).click();
+  await page.getByRole('button', { name: 'Contrastar con el código', exact: true }).click();
+  await page.getByRole('button', { name: 'Profundizar con mi modelo', exact: true }).click();
+  const explain = page.getByRole('button', { name: 'Explicar con mi modelo', exact: true });
+  await expect(explain).toBeDisabled();
+  await page.getByRole('checkbox', { name: /Enviar la pregunta y los fragmentos/ }).check();
+  await explain.click();
+  await expect(page.getByRole('alert')).toContainText('Se alcanzó un límite');
+  await expect(page.getByLabel('Usar para esta consulta')).toHaveValue('chatgpt');
+  await expect(page.locator('.error .button.primary')).toContainText('Gestionar uso');
+  expect(submitted).toHaveLength(1);
+  expect(submitted[0]).toMatchObject({
+    provider: 'chatgpt',
+    allowRemote: true,
+    expectedProfileId: 'synthetic-profile',
+    model: 'example-model',
+  });
+  expect(submitted[0]).not.toHaveProperty('expectedEndpoint');
 });

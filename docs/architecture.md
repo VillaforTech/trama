@@ -21,23 +21,27 @@ flowchart LR
   UI --> Practice[Prediction and practice]
   Practice --> Store
   UI --> Context[Relevant source excerpts]
-  Context --> Provider[Configured model endpoint]
-  Provider --> Validate[Reference validation]
+  Context --> Choice{Selected connection}
+  Choice --> ChatGPT[ChatGPT OAuth and Responses]
+  Choice --> Provider[API or local model]
+  ChatGPT --> Validate[Reference validation]
+  Provider --> Validate
   Validate --> UI
 ```
 
-| Component         | Responsibility                                                                             | Entry point                               |
-| ----------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------- |
-| Mac shell         | Native window, picker, menus, process lifecycle, restricted preload bridge                 | `desktop/main.cjs`, `desktop/preload.cjs` |
-| Interface         | Project navigation, maps, source inspection, practice, notes, settings                     | `src/main.tsx`                            |
-| API boundary      | Local request checks, import jobs, snapshot and notebook operations                        | `server/index.ts`                         |
-| Repository reader | Enumerate allowed files, read content, record coverage and revision                        | `server/repository.ts`                    |
-| Organizer         | Identify declarations and propose architecture, functionalities, and process reading steps | `server/organizer.js`                     |
-| Module graph      | Resolve visible local JS/TS import relationships and Python candidates                     | `server/graph.ts`                         |
-| Persistence       | Projects, snapshots, source files, versioned learning records                              | `server/database.ts`                      |
-| Learning          | Retrieve context, build exercises, validate model source references                        | `server/learning.ts`                      |
-| Model connection  | Endpoint configuration, consent, bounded requests, timeout and error handling              | `server/provider.ts`                      |
-| Shared contracts  | Data structures for snapshots, references, learning and models                             | `shared/`                                 |
+| Component          | Responsibility                                                                             | Entry point                                   |
+| ------------------ | ------------------------------------------------------------------------------------------ | --------------------------------------------- |
+| Mac shell          | Native window, picker, menus, process lifecycle, restricted preload bridge                 | `desktop/main.cjs`, `desktop/preload.cjs`     |
+| Interface          | Project navigation, maps, source inspection, practice, notes, settings                     | `src/main.tsx`                                |
+| API boundary       | Local request checks, import jobs, snapshot and notebook operations                        | `server/index.ts`                             |
+| Repository reader  | Enumerate allowed files, read content, record coverage and revision                        | `server/repository.ts`                        |
+| Organizer          | Identify declarations and propose architecture, functionalities, and process reading steps | `server/organizer.js`                         |
+| Module graph       | Resolve visible local JS/TS import relationships and Python candidates                     | `server/graph.ts`                             |
+| Persistence        | Projects, snapshots, source files, versioned learning records                              | `server/database.ts`                          |
+| Learning           | Retrieve context, build exercises, validate model source references                        | `server/learning.ts`                          |
+| Model connection   | Endpoint configuration, consent, bounded requests, timeout and error handling              | `server/provider.ts`                          |
+| ChatGPT connection | OAuth sessions, encrypted persistence, account catalog, and Responses transport            | `server/chatgpt-auth.ts`, `server/chatgpt.ts` |
+| Shared contracts   | Data structures for snapshots, references, learning and models                             | `shared/`                                     |
 
 ## Snapshot and learning model
 
@@ -63,7 +67,21 @@ The learning service retrieves source windows using the question and the selecte
 
 The model returns a structured answer with a summary, claims, references, an optional example, and a next question. The validator checks that cited ranges were actually present in the request and exist in the captured files. It reconstructs the displayed excerpt from the snapshot. Missing or invalid references cannot become verified source evidence. A correct line range still does not prove the semantic claim attached to it.
 
-The default endpoint is a local OpenAI-compatible server. External endpoints use HTTPS and require explicit consent for each request. Provider credentials remain in server memory or the process environment. Endpoint and model names persist in `provider.json`. A request has a timeout, response size limit, and a concurrency limit. Redirects are rejected.
+The user selects either a ChatGPT connection or an OpenAI-compatible API connection. Both feed the same source-reference validator. Requests have timeout, response-size and concurrency bounds. Choosing one provider does not authorize a fallback to another billing method.
+
+### ChatGPT plan connection
+
+The primary setup action is **Continue with ChatGPT**. Trama's own protocol implementation follows the documented OAuth public-client flow: an installation host ID, PKCE S256, state, nonce, a temporary loopback callback, authorization-code exchange, and verified ID tokens. The `jose` dependency performs JWT verification. This implementation does not bundle the Sign in with ChatGPT DevKit or LearnHarness code. [OpenAI registration and sign-in protocol](https://developers.openai.com/siwc/token-sharing-open-source/sign-in)
+
+The local service owns durable credentials, token refresh, account status, and model discovery. The UI receives sanitized state and available model identifiers. Account metadata and tokens are encrypted in `chatgpt-auth.json`, with owner-only file permissions (`0600`). A private utility-process channel asks Electron main to use `safeStorage`, backed by the macOS Keychain. Initialization fails if secure storage is unavailable; the local browser mode therefore offers API and Ollama connections only. Credentials and temporary credential files are excluded from repository snapshots and exported investigations.
+
+Inference uses OpenAI's Responses endpoint with the connection's OAuth token and the selected account-authorized model. Source excerpts are sent only for an explicit explanation request. The connector uses stateless input and `store: false`; this request option is not a claim that all provider-side processing or retention is disabled. Subscription errors are surfaced without retrying through an API key. The account's [usage settings](https://chatgpt.com/settings/usage) are the authority for its allowance and credits.
+
+Real-account sign-in, model eligibility, and actual allowance consumption remain unverified. The independent implementation and test fixtures must not be described as an OpenAI certification or a completed live-account test.
+
+### API and local model connection
+
+The advanced connection accepts an OpenAI-compatible `/chat/completions` endpoint. Its initial address is an existing local Ollama server. External endpoints use HTTPS and require explicit consent for each request. API credentials remain in service memory or the process environment. Endpoint and model names persist in `provider.json`. Redirects are rejected. This route has its own configuration and provider billing.
 
 ## Mac process boundary
 
@@ -75,9 +93,9 @@ The renderer has context isolation enabled and Node integration disabled. Main-p
 
 ## Build and distribution
 
-`npm run desktop` builds the interface and service, then starts the Mac application. `npm run dist:mac` creates the configured Apple Silicon release artifacts in `release/`. The first distributed Mac build requires macOS 13 or newer. Intel packages, other desktop platforms, and automatic updates require their own packaging and validation work.
+`npm run desktop` builds the interface and service, then starts the Mac application. Prebuilt downloads are pending publication. `npm run dist:mac` creates Apple Silicon artifacts in `release/`. The Mac runtime requires macOS 13 or newer. Intel packages, other desktop platforms, and automatic updates require their own packaging and validation work.
 
-The first preview has no Apple Developer ID certificate or notarization. Approval on a downloaded build is handled by macOS. An ad-hoc signature can establish the package's structural signature, while Developer ID and notarization require the maintainer's Apple credentials. Release notes report the signature status of the actual artifact. [Electron signing and notarization](https://www.electronjs.org/docs/latest/tutorial/code-signing)
+Packaging uses an ad-hoc signature without an Apple Developer ID certificate or notarization. Approval on a downloaded build is handled by macOS. Developer ID signing and notarization require the maintainer's Apple credentials. Release notes must describe the actual published artifacts. [Electron signing and notarization](https://www.electronjs.org/docs/latest/tutorial/code-signing)
 
 The optional local browser mode uses `npm run build` and `npm start`, serving the application at port 4891. Interface development uses Vite on port 5173 with an API proxy. These modes support interface and backend development alongside native Mac testing.
 

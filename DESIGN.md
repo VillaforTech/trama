@@ -20,6 +20,6 @@ Zed's persistent workspace, Linear's restrained hierarchy, and Raycast's keyboar
 
 ## Platform behavior
 
-The Mac window uses native traffic lights, a draggable title bar, native application menus, native file/save dialogs, and a minimal isolated bridge. Application state lives outside the app bundle and survives updates. Electron embeds the runtime, so the download requires no developer tools.
+The Mac window uses native traffic lights, a draggable title bar, native application menus, native file/save dialogs, and a minimal isolated bridge. Application state lives outside the app bundle. Electron embeds the runtime, so the packaged application requires no developer tools. Credential access across signed app updates remains to be verified.
 
 The browser preview adapts below 620px with a collapsible project rail. Source and map regions scroll internally. Focus indicators, labelled dialogs, keyboard commands and reduced-motion behavior are included. Accessibility checks cover library and practice; keyboard and mobile flows have automated tests. These checks do not substitute for a full accessibility evaluation with assistive technology.

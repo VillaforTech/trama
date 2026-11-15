@@ -4,7 +4,7 @@
 
 Trama is a desktop application for Mac that turns a repository into a place to investigate architecture, follow a behavior across files, and practice explaining it yourself. Open a project with the native folder picker, explore its connections, and keep a source-backed record of what you understand.
 
-[Download for Mac](https://github.com/VillaforTech/trama/releases/latest) · [Español](README.es.md) · [How it works](docs/architecture.md) · [Research](docs/research.md)
+[Install on Mac](#install-on-mac) · [Español](README.es.md) · [How it works](docs/architecture.md) · [Research](docs/research.md)
 
 ![Trama workspace showing a source-backed learning route](docs/images/overview.png)
 
@@ -16,9 +16,16 @@ The included **Data pipeline** example follows a CSV through validation, discoun
 
 ## Install on Mac
 
-The first packaged release targets **Apple Silicon Macs running macOS 13 or later**. Download the Mac ZIP from [Releases](https://github.com/VillaforTech/trama/releases/latest), expand it, and move **Trama.app** to Applications. The application bundles its runtime, so this installation works without a separate Node.js setup.
+Run Trama from source with **Node.js 24 or newer**, npm, and **macOS 13 or later**. The Mac application is currently tested on Apple Silicon.
 
-This preview has no Apple Developer ID signature or notarization. macOS may ask you to approve the download in **System Settings → Privacy & Security**. Review the source and the release before choosing to open it. [Apple's guidance](https://support.apple.com/en-us/102445)
+```sh
+git clone https://github.com/VillaforTech/trama.git
+cd trama
+npm ci
+npm run desktop
+```
+
+The command builds Trama and opens its Mac window. Prebuilt downloads are pending publication. You can build an Apple Silicon package yourself with `npm run dist:mac`; it creates a ZIP and DMG in `release/`. Packaging uses an ad-hoc signature and has no Apple Developer ID identity or notarization. [Apple's guidance for downloaded applications](https://support.apple.com/en-us/102445)
 
 Open Trama, choose **Abrir carpeta**, and select a local checkout. A GitHub repository and two included examples are also available. The interface currently uses Spanish. The core exploration and practice flow works without an AI account.
 
@@ -30,20 +37,7 @@ Open Trama, choose **Abrir carpeta**, and select a local checkout. A GitHub repo
 
 For a private GitHub repository, use an authorized GitHub CLI session or supply a token with read access to that repository. A local checkout uses the access you already have to its files. If you use GitHub CLI, sign in with `gh auth login` before importing. Tokens remain outside saved investigations.
 
-## Run the Mac app from source
-
-Development requires **Node.js 24 or newer**, npm, and macOS.
-
-```sh
-git clone https://github.com/VillaforTech/trama.git
-cd trama
-npm ci
-npm run desktop
-```
-
-The desktop command builds the application and starts its Mac window. To package a Mac release, run `npm run dist:mac` on a Mac.
-
-The [browser preview](https://villafortech.github.io/trama/) contains fictional examples for a quick look at the workflow. A local browser interface is also available with `npm run build` followed by `npm start` at `http://127.0.0.1:4891`.
+The [browser preview](https://villafortech.github.io/trama/) contains fictional examples for a quick look at the workflow. ChatGPT sign-in and private repository import require the local application. A local browser interface is also available with `npm run build` followed by `npm start` at `http://127.0.0.1:4891`.
 
 ## What you can do
 
@@ -51,16 +45,28 @@ The [browser preview](https://villafortech.github.io/trama/) contains fictional 
 - **Follow relationships.** Navigate the module map and inspect the source behind a connection.
 - **Search the capture.** Find symbols and text across the indexed files without losing your investigation.
 - **Practice reasoning.** Record a prediction, reveal evidence, explain a mismatch, and try a transfer question. Review attempts later with an explicit self-assessment.
-- **Ask a source-backed question.** Connect an optional local or OpenAI-compatible model. Replies include references that are checked against the captured source.
+- **Ask a source-backed question.** Connect ChatGPT, or configure an optional local or OpenAI-compatible model. Replies include references that are checked against the captured source.
 - **Keep your work.** Save notes and progress, revisit captured revisions, compare file changes, and export or restore an investigation.
 
-## Optional model connection
+## Connect ChatGPT
 
-Open **Ajustes** and enter an OpenAI-compatible API base URL and a model available on that server. For an existing Ollama installation, the default base URL is `http://127.0.0.1:11434/v1`. Trama does not install or download a model. Use the name reported by your model server.
+In the Mac application, open **Ajustes** and choose **Continue with ChatGPT**. Complete sign-in in your browser, approve ChatGPT plan usage, then choose an available model. This connects Trama separately from other applications signed into your account; it does not require an API key or Codex installation. The local browser mode supports API and Ollama connections; ChatGPT sign-in requires the Mac app's secure storage.
 
-Test the connection, then ask a question in an investigation. Each request sends a bounded set of relevant source excerpts. An external endpoint requires your consent for the request. Provider charges depend on your own account. Supported endpoints must implement `/chat/completions` and return the requested JSON structure.
+![ChatGPT connection settings before signing in](docs/images/chatgpt.png)
 
-Model API keys entered in the interface remain in server memory. Endpoint and model preferences persist locally. Environment variables are also supported.
+Eligible **ChatGPT Plus and Pro** accounts can authorize eligible requests using their plan allowance or available credits. OpenAI determines availability and limits. This integration targets Trama's open-source, locally running application. [OpenAI's integration guide](https://developers.openai.com/cookbook/articles/sign-in-with-chatgpt)
+
+Sign-in does not grant access to your ChatGPT conversation history. Trama sends the question and selected source excerpts directly to OpenAI when you request an explanation. Review your allowance, credits, and access in [ChatGPT usage settings](https://chatgpt.com/settings/usage). A quota or authorization error stops the request; Trama does not silently switch to API-key billing.
+
+The connector is a preview. Validation with a real account, live model eligibility, and actual allowance consumption is still pending. The Mac app encrypts its saved ChatGPT credentials through the system's secure storage. Source captures and notebooks remain unencrypted. The [security policy](SECURITY.md) explains these boundaries and external processing.
+
+### Advanced: API or Ollama
+
+In **Ajustes**, configure an OpenAI-compatible API base URL and a model available on that server. For an existing Ollama installation, use `http://127.0.0.1:11434/v1`. Trama does not install or download models. Test the connection before asking a question.
+
+API and Ollama connections are separate choices from ChatGPT sign-in. External API billing belongs to the provider account you configure. Each external model request requires consent to send its selected source context. Compatible endpoints must implement `/chat/completions` and return the requested JSON structure.
+
+API keys entered in the interface remain in service memory. Endpoint and model preferences persist locally. The following environment variables configure this API route:
 
 | Variable               | Purpose                                                                                                                           |
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------- |

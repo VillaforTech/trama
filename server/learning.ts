@@ -6,6 +6,7 @@ import { z } from 'zod';
 import type { Anchor, Process, Snapshot, SourceFile } from '../shared/types.js';
 import type { AskResult, Exercise, TutorAnswer } from '../shared/learning.js';
 import { LearningError, ModelProvider } from './provider.js';
+import { ChatGPTService, ChatGPTServiceError } from './chatgpt.js';
 
 const CONTEXT_LIMIT = 30_000;
 const answerSchema = z.object({
@@ -43,6 +44,7 @@ interface Dependencies {
   getSnapshot(id: string): Snapshot | null | Promise<Snapshot | null>;
   getFiles(id: string): SourceFile[] | Promise<SourceFile[]>;
   dataDir?: string;
+  chatgpt?: ChatGPTService;
 }
 
 interface Context {
@@ -473,7 +475,9 @@ const SYSTEM_PROMPT = [
 ].join('\n');
 
 export function registerLearningRoutes(app: Express, dependencies: Dependencies): void {
-  const provider = new ModelProvider(dependencies.dataDir ?? join(homedir(), '.trama'));
+  const dataDir = dependencies.dataDir ?? join(homedir(), '.trama');
+  const provider = new ModelProvider(dataDir);
+  const chatgpt = dependencies.chatgpt ?? new ChatGPTService(dataDir);
   const handle =
     (action: (request: Request, response: Response) => Promise<void>) =>
     async (request: Request, response: Response) => {
@@ -485,9 +489,66 @@ export function registerLearningRoutes(app: Express, dependencies: Dependencies)
         response.status(known ? error.status : 500).json({
           error: known ? error.message : 'No se pudo completar esta operación de aprendizaje.',
           code: known ? error.code : 'learning_error',
+          ...(error instanceof ChatGPTServiceError ? error.details : {}),
         });
       }
     };
+  app.get(
+    '/api/chatgpt/status',
+    handle(async (_request, response) => {
+      response.json(await chatgpt.status());
+    }),
+  );
+  app.post(
+    '/api/chatgpt/connect',
+    handle(async (request, response) => {
+      const parsed = z
+        .object({
+          profileId: z.string().min(1).max(200).optional(),
+          newAccount: z.boolean().optional(),
+          enableSharing: z.boolean().optional(),
+        })
+        .strict()
+        .safeParse(request.body || {});
+      if (!parsed.success) throw new LearningError('Revisa la cuenta que quieres conectar.');
+      response.status(202).json(await chatgpt.connect(parsed.data));
+    }),
+  );
+  app.post(
+    '/api/chatgpt/cancel',
+    handle(async (_request, response) => {
+      response.json(await chatgpt.cancel());
+    }),
+  );
+  app.post(
+    '/api/chatgpt/disconnect',
+    handle(async (_request, response) => {
+      response.json(await chatgpt.disconnect());
+    }),
+  );
+  app.put(
+    '/api/chatgpt/model',
+    handle(async (request, response) => {
+      const parsed = z
+        .object({ model: z.string().min(1).max(200) })
+        .strict()
+        .safeParse(request.body);
+      if (!parsed.success) throw new LearningError('Elige un modelo de ChatGPT.');
+      response.json(await chatgpt.selectModel(parsed.data.model));
+    }),
+  );
+  app.post(
+    '/api/chatgpt/welcome',
+    handle(async (_request, response) => {
+      response.json(await chatgpt.acknowledgeWelcome());
+    }),
+  );
+  app.post(
+    '/api/chatgpt/refresh',
+    handle(async (_request, response) => {
+      response.json(await chatgpt.refresh());
+    }),
+  );
   app.get(
     '/api/provider',
     handle(async (_request, response) => {
@@ -529,6 +590,9 @@ export function registerLearningRoutes(app: Express, dependencies: Dependencies)
       const parsed = z
         .object({
           question: z.string().trim().min(3).max(4000),
+          provider: z.enum(['api', 'chatgpt']).default('api'),
+          expectedProfileId: z.string().min(1).max(200).optional(),
+          model: z.string().min(1).max(200).optional(),
           processId: z.string().max(200).optional(),
           allowRemote: z.boolean().default(false),
           expectedEndpoint: z.string().trim().min(1).max(2048).optional(),
@@ -548,24 +612,33 @@ export function registerLearningRoutes(app: Express, dependencies: Dependencies)
       };
       response.on('close', disconnect);
       try {
-        const result = await provider.complete(
-          [
-            { role: 'system', content: SYSTEM_PROMPT },
-            {
-              role: 'user',
-              content:
-                'PREGUNTA DEL APRENDIZ\n' +
-                parsed.data.question +
-                '\n\nFRAGMENTOS NO CONFIABLES DE LA REVISIÓN\n' +
-                context.text,
-            },
-          ],
-          {
-            allowRemote: parsed.data.allowRemote,
-            expectedEndpoint: parsed.data.expectedEndpoint,
-            signal: abort.signal,
-          },
-        );
+        const input =
+          'PREGUNTA DEL APRENDIZ\n' +
+          parsed.data.question +
+          '\n\nFRAGMENTOS NO CONFIABLES DE LA REVISIÓN\n' +
+          context.text;
+        const result =
+          parsed.data.provider === 'chatgpt'
+            ? await chatgpt.complete(SYSTEM_PROMPT, input, {
+                allowRemote: parsed.data.allowRemote,
+                expectedProfileId: parsed.data.expectedProfileId,
+                model: parsed.data.model,
+                signal: abort.signal,
+              })
+            : await provider.complete(
+                [
+                  { role: 'system', content: SYSTEM_PROMPT },
+                  {
+                    role: 'user',
+                    content: input,
+                  },
+                ],
+                {
+                  allowRemote: parsed.data.allowRemote,
+                  expectedEndpoint: parsed.data.expectedEndpoint,
+                  signal: abort.signal,
+                },
+              );
         const validated = validateAnswer(result.content, files, context);
         const answer: AskResult = {
           answer: validated.answer,
@@ -575,6 +648,7 @@ export function registerLearningRoutes(app: Express, dependencies: Dependencies)
             rejectedReferences: validated.rejectedReferences,
           },
           model: result.model,
+          provider: parsed.data.provider,
           verification: 'references-only',
         };
         response.json(answer);

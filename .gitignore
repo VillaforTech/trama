@@ -23,3 +23,8 @@ __pycache__/
 
 release/
 assets/icon.iconset/
+
+# Local account storage, including atomic-write and lock files.
+chatgpt-auth.json*
+chatgpt-auth.lock
+chatgpt-preferences.json*

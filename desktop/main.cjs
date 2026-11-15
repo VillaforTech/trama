@@ -5,6 +5,7 @@ const {
   ipcMain,
   Menu,
   session,
+  safeStorage,
   shell,
   utilityProcess,
 } = require('electron');
@@ -40,9 +41,12 @@ function isAppUrl(value) {
 function externalUrl(value) {
   try {
     const url = new URL(value);
-    return (
-      url.protocol === 'https:' && !url.username && !url.password && externalHosts.has(url.hostname)
-    );
+    if (url.protocol !== 'https:' || url.username || url.password || url.port) return false;
+    if (url.hostname === 'auth.openai.com')
+      return url.pathname === '/api/accounts/authorize' && !url.hash;
+    if (url.hostname === 'chatgpt.com')
+      return url.pathname === '/settings/usage' && !url.search && !url.hash;
+    return externalHosts.has(url.hostname);
   } catch {
     return false;
   }
@@ -172,7 +176,34 @@ function startEngine() {
       reject(new Error('El motor local tardó demasiado en iniciar.'));
     }, 30000);
     let ready = false;
-    engine.once('message', (message) => {
+    engine.on('message', (message) => {
+      // This channel belongs only to our trusted Node utility process. No renderer IPC
+      // exposes encryption or decryption, and credentials never enter web contents.
+      if (message?.type === 'trama:secret') {
+        const child = engine;
+        if (
+          typeof message.id !== 'string' ||
+          !/^[a-f0-9-]{36}$/.test(message.id) ||
+          !['available', 'encrypt', 'decrypt'].includes(message.operation) ||
+          (message.operation !== 'available' &&
+            (typeof message.value !== 'string' || message.value.length > 262144))
+        )
+          return;
+        try {
+          if (!safeStorage.isEncryptionAvailable()) throw new Error('unavailable');
+          const value =
+            message.operation === 'available'
+              ? 'available'
+              : message.operation === 'encrypt'
+                ? safeStorage.encryptString(message.value).toString('base64')
+                : safeStorage.decryptString(Buffer.from(message.value, 'base64'));
+          child?.postMessage({ type: 'trama:secret-result', id: message.id, value });
+        } catch {
+          child?.postMessage({ type: 'trama:secret-result', id: message.id, error: 'unavailable' });
+        }
+        return;
+      }
+      if (ready) return;
       if (
         message?.type !== 'ready' ||
         !Number.isInteger(message.port) ||
@@ -277,6 +308,11 @@ function configureSession() {
 ipcMain.handle('trama:select-folder', async (event) => {
   if (!validSender(event)) throw new Error('La solicitud no procede de Trama.');
   return selectFolder();
+});
+ipcMain.handle('trama:open-external', async (event, url) => {
+  if (!validSender(event) || typeof url !== 'string' || url.length > 16384 || !externalUrl(url))
+    throw new Error('Esta dirección no está permitida.');
+  await shell.openExternal(url);
 });
 if (!app.requestSingleInstanceLock()) app.quit();
 else {

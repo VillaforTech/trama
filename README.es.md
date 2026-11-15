@@ -4,7 +4,7 @@
 
 Trama es una aplicación de escritorio para Mac que convierte un repositorio en un espacio para investigar su arquitectura, seguir un comportamiento entre archivos y practicar cómo explicarlo por tu cuenta. Abre el proyecto con el selector de carpetas de macOS, explora sus conexiones y conserva lo aprendido junto a sus fuentes.
 
-[Descargar para Mac](https://github.com/VillaforTech/trama/releases/latest) · [English](README.md) · [Arquitectura](docs/architecture.md) · [Investigación](docs/research.md)
+[Instalar en Mac](#instalar-en-mac) · [English](README.md) · [Arquitectura](docs/architecture.md) · [Investigación](docs/research.md)
 
 ![Espacio de Trama con una ruta de aprendizaje vinculada al código](docs/images/overview.png)
 
@@ -16,9 +16,16 @@ El ejemplo **Data pipeline** recorre un CSV, su validación, los descuentos, el 
 
 ## Instalar en Mac
 
-La primera versión empaquetada está dirigida a **Mac con Apple Silicon y macOS 13 o posterior**. Descarga el ZIP para Mac desde [Releases](https://github.com/VillaforTech/trama/releases/latest), descomprímelo y mueve **Trama.app** a Aplicaciones. La aplicación incluye el entorno de ejecución y puede abrirse sin instalar Node.js por separado.
+Ejecuta Trama desde el código con **Node.js 24 o posterior**, npm y **macOS 13 o posterior**. La aplicación Mac está comprobada actualmente en Apple Silicon.
 
-Esta versión preliminar todavía no tiene firma Developer ID ni notarización de Apple. macOS puede pedirte que apruebes la descarga en **Ajustes del Sistema → Privacidad y seguridad**. Revisa el origen y la versión antes de decidir abrirla. [Guía de Apple](https://support.apple.com/es-es/102445)
+```sh
+git clone https://github.com/VillaforTech/trama.git
+cd trama
+npm ci
+npm run desktop
+```
+
+El comando construye Trama y abre su ventana Mac. Las descargas compiladas están pendientes de publicación. Puedes crear tu propio paquete para Apple Silicon con `npm run dist:mac`; el ZIP y el DMG quedan en `release/`. El empaquetado usa firma ad-hoc, sin identidad Developer ID ni notarización de Apple. [Guía de Apple para abrir aplicaciones descargadas](https://support.apple.com/es-es/102445)
 
 Abre Trama, elige **Abrir carpeta** y selecciona un repositorio clonado. También puedes abrir un repositorio de GitHub o uno de los dos ejemplos incluidos. La exploración y la práctica básicas funcionan sin una cuenta de IA.
 
@@ -30,20 +37,7 @@ Abre Trama, elige **Abrir carpeta** y selecciona un repositorio clonado. Tambié
 
 Para GitHub privado puedes usar una sesión autorizada de GitHub CLI o un token con lectura del contenido del repositorio. Con una carpeta local, Trama usa el acceso que ya tienes a sus archivos. Si usas GitHub CLI, inicia sesión con `gh auth login` antes de importar. El token queda fuera de las investigaciones guardadas.
 
-## Ejecutar la aplicación Mac desde el código
-
-Para desarrollar necesitas **Node.js 24 o posterior**, npm y macOS.
-
-```sh
-git clone https://github.com/VillaforTech/trama.git
-cd trama
-npm ci
-npm run desktop
-```
-
-El comando construye la aplicación y abre su ventana Mac. Para empaquetar una versión, ejecuta `npm run dist:mac` en un Mac.
-
-La [vista previa del navegador](https://villafortech.github.io/trama/) contiene ejemplos ficticios para conocer el recorrido. También puedes usar la interfaz local del navegador con `npm run build` y luego `npm start`, en `http://127.0.0.1:4891`.
+La [vista previa del navegador](https://villafortech.github.io/trama/) contiene ejemplos ficticios para conocer el recorrido. Para conectar ChatGPT o importar un repositorio privado necesitas la aplicación local. También puedes usar la interfaz local del navegador con `npm run build` y luego `npm start`, en `http://127.0.0.1:4891`.
 
 ## Qué puedes hacer
 
@@ -51,16 +45,28 @@ La [vista previa del navegador](https://villafortech.github.io/trama/) contiene 
 - **Seguir conexiones.** Navegar por el mapa de módulos e inspeccionar la fuente de una relación.
 - **Buscar en la captura.** Encontrar símbolos y texto entre los archivos indexados.
 - **Practicar razonamiento.** Escribir una predicción, contrastarla con la fuente, explicar una diferencia y resolver una variante. Conservar una autoevaluación de cada intento.
-- **Consultar con fuentes.** Conectar opcionalmente un modelo local o compatible con OpenAI. Sus referencias se comprueban contra el código capturado.
+- **Consultar con fuentes.** Conectar ChatGPT o configurar un modelo local o compatible con OpenAI. Sus referencias se comprueban contra el código capturado.
 - **Retomar el trabajo.** Guardar notas y posición, volver a una revisión, comparar archivos cambiados y exportar o restaurar una investigación.
 
-## Conectar un modelo
+## Conectar ChatGPT
 
-En **Ajustes**, introduce la dirección base de una API compatible con OpenAI y el identificador de un modelo disponible. Para una instalación existente de Ollama, la dirección inicial es `http://127.0.0.1:11434/v1`. Trama requiere que el modelo ya esté instalado y disponible en ese servidor.
+En la aplicación Mac, abre **Ajustes** y elige **Continue with ChatGPT**. Completa el inicio de sesión en tu navegador, autoriza el uso de tu plan y selecciona un modelo disponible. Trama recibe su propia conexión autorizada; no necesitas una API key ni instalar Codex. El modo de navegador local admite API y Ollama; la conexión ChatGPT necesita el almacenamiento seguro de la aplicación Mac.
 
-Comprueba la conexión y formula una pregunta dentro de una investigación. Cada consulta envía una selección acotada de fragmentos. Para un proveedor externo, la interfaz pide autorización en esa consulta. El consumo depende de tu cuenta. La API debe implementar `/chat/completions` y responder con la estructura JSON solicitada.
+![Ajustes de la conexión con ChatGPT antes de iniciar sesión](docs/images/chatgpt.png)
 
-La credencial introducida en la interfaz permanece en la memoria del servidor. La dirección y el nombre del modelo se conservan localmente. También puedes configurar variables de entorno.
+Las cuentas **ChatGPT Plus y Pro elegibles** pueden usar la capacidad incluida en su plan o los créditos disponibles para solicitudes admitidas. OpenAI determina la disponibilidad y los límites. Esta integración corresponde a la aplicación abierta de Trama que ejecutas localmente. [Guía oficial de integración](https://developers.openai.com/cookbook/articles/sign-in-with-chatgpt)
+
+El inicio de sesión no da acceso a tu historial de conversaciones de ChatGPT. Cuando solicitas una explicación, Trama envía la pregunta y los fragmentos seleccionados directamente a OpenAI. Consulta el consumo, los créditos y los accesos en [Ajustes de uso de ChatGPT](https://chatgpt.com/settings/usage). Si se agota la cuota o falla la autorización, la solicitud se detiene sin cambiar automáticamente a facturación por API.
+
+El conector es preliminar. La comprobación con una cuenta real, los modelos autorizados y el consumo efectivo del plan siguen pendientes. La aplicación Mac cifra sus credenciales de ChatGPT mediante el almacenamiento seguro del sistema. Las capturas de código y los cuadernos permanecen sin cifrar. La [política de seguridad](SECURITY.md) describe estos límites y qué información sale del equipo.
+
+### Avanzado: API u Ollama
+
+En **Ajustes**, configura la dirección base de una API compatible con OpenAI y un modelo disponible en ese servidor. Para una instalación existente de Ollama, usa `http://127.0.0.1:11434/v1`. Trama requiere que el modelo ya esté instalado y disponible. Comprueba la conexión antes de consultar.
+
+API y Ollama son opciones independientes de la conexión de ChatGPT. Una API externa usa la facturación de la cuenta del proveedor configurado. Cada consulta externa requiere autorización para enviar los fragmentos seleccionados. La API debe implementar `/chat/completions` y responder con la estructura JSON solicitada.
+
+Las API keys introducidas en la interfaz permanecen en la memoria del servicio. La dirección y el nombre del modelo se conservan localmente. Estas variables configuran la conexión por API:
 
 | Variable               | Uso                                                                                                                                  |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |

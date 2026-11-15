@@ -25,9 +25,10 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import type { Anchor, Learning, Process, Snapshot, Unit } from '../shared/types';
-import type { AskResult, Exercise, ProviderConfig } from '../shared/learning';
-import { api, DEMO, request } from './api';
+import type { AskResult, Exercise, ProviderConfig, ChatGPTStatus } from '../shared/learning';
+import { api, DEMO, request, RequestError } from './api';
 import { Button, Citation, Empty, Install, Pill } from './components';
+import ChatGPTSettings, { openChatGPTPage, CHATGPT_USAGE_URL } from './ChatGPTSettings';
 
 type StudyProps = {
   snapshot: Snapshot;
@@ -948,6 +949,7 @@ export function Notebook({
 }
 
 export function ProviderSettings({ onNotice }: { onNotice: (s: string) => void }) {
+  const [connectionView, setConnectionView] = useState<'chatgpt' | 'api'>('chatgpt');
   const [config, setConfig] = useState<ProviderConfig>({
       endpoint: 'http://127.0.0.1:11434/v1',
       model: '',
@@ -965,7 +967,6 @@ export function ProviderSettings({ onNotice }: { onNotice: (s: string) => void }
         .then(setConfig)
         .catch((e) => setError(e.message));
   }, []);
-  if (DEMO) return <Install />;
   async function save(test = false) {
     setBusy(true);
     setError('');
@@ -992,69 +993,93 @@ export function ProviderSettings({ onNotice }: { onNotice: (s: string) => void }
     }
   }
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        save();
-      }}
-    >
-      <p className="muted">
-        Conecta un endpoint de Ollama o un servicio compatible con OpenAI. La lectura del
-        repositorio funciona sin modelo.
-      </p>
-      <label className="field">
-        Dirección del servicio
-        <input
-          type="url"
-          required
-          value={config.endpoint}
-          onChange={(e) => setConfig({ ...config, endpoint: e.target.value })}
-        />
-      </label>
-      <label className="field">
-        Modelo
-        <input
-          required
-          placeholder="Nombre exacto del modelo instalado o disponible"
-          value={config.model}
-          onChange={(e) => setConfig({ ...config, model: e.target.value })}
-        />
-      </label>
-      <label className="field">
-        Clave de API, si el servicio la necesita
-        <input
-          type="password"
-          autoComplete="off"
-          placeholder={
-            config.hasKey ? 'Clave disponible en esta sesión' : 'Opcional para modelos locales'
-          }
-          value={key}
-          onChange={(e) => setKey(e.target.value)}
-        />
-        <small>Se conserva en la memoria del proceso de Trama.</small>
-      </label>
-      <label className="check-field">
-        <input type="checkbox" checked={remote} onChange={(e) => setRemote(e.target.checked)} />
-        Permitir esta conexión a un servicio fuera de mi equipo
-      </label>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      <div className="form-actions">
-        <Button disabled={busy} type="submit" primary>
-          {busy ? <Loader2 size={14} className="spin" /> : <Check size={14} />}Guardar conexión
-        </Button>
-        <Button disabled={busy || !config.model} onClick={() => save(true)}>
-          Probar conexión
-        </Button>
+    <>
+      <div className="tabs connection-tabs">
+        <button
+          type="button"
+          className={connectionView === 'chatgpt' ? 'active' : ''}
+          onClick={() => setConnectionView('chatgpt')}
+        >
+          ChatGPT
+        </button>
+        <button
+          type="button"
+          className={connectionView === 'api' ? 'active' : ''}
+          onClick={() => setConnectionView('api')}
+        >
+          API o modelo local
+        </button>
       </div>
-      <p className="footnote">
-        El proveedor determina dónde se ejecuta el modelo y su coste, incluso si su endpoint está en
-        tu equipo. Antes de enviar código, cada consulta pide tu autorización.
-      </p>
-    </form>
+      {connectionView === 'chatgpt' ? (
+        <ChatGPTSettings onNotice={onNotice} />
+      ) : DEMO ? (
+        <Install />
+      ) : (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            save();
+          }}
+        >
+          <p className="muted">
+            Conecta un endpoint de Ollama o un servicio compatible con OpenAI. La lectura del
+            repositorio funciona sin modelo.
+          </p>
+          <label className="field">
+            Dirección del servicio
+            <input
+              type="url"
+              required
+              value={config.endpoint}
+              onChange={(e) => setConfig({ ...config, endpoint: e.target.value })}
+            />
+          </label>
+          <label className="field">
+            Modelo
+            <input
+              required
+              placeholder="Nombre exacto del modelo instalado o disponible"
+              value={config.model}
+              onChange={(e) => setConfig({ ...config, model: e.target.value })}
+            />
+          </label>
+          <label className="field">
+            Clave de API, si el servicio la necesita
+            <input
+              type="password"
+              autoComplete="off"
+              placeholder={
+                config.hasKey ? 'Clave disponible en esta sesión' : 'Opcional para modelos locales'
+              }
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+            />
+            <small>Se conserva en la memoria del proceso de Trama.</small>
+          </label>
+          <label className="check-field">
+            <input type="checkbox" checked={remote} onChange={(e) => setRemote(e.target.checked)} />
+            Permitir esta conexión a un servicio fuera de mi equipo
+          </label>
+          {error && (
+            <p className="error" role="alert">
+              {error}
+            </p>
+          )}
+          <div className="form-actions">
+            <Button disabled={busy} type="submit" primary>
+              {busy ? <Loader2 size={14} className="spin" /> : <Check size={14} />}Guardar conexión
+            </Button>
+            <Button disabled={busy || !config.model} onClick={() => save(true)}>
+              Probar conexión
+            </Button>
+          </div>
+          <p className="footnote">
+            El proveedor determina dónde se ejecuta el modelo y su coste, incluso si su endpoint
+            está en tu equipo. Antes de enviar código, cada consulta pide tu autorización.
+          </p>
+        </form>
+      )}
+    </>
   );
 }
 
@@ -1075,25 +1100,44 @@ export function Tutor({
   const [question, setQuestion] = useState(
     'Explica este proceso paso a paso. Sigue los valores, señala sus supuestos y dame un ejemplo concreto.',
   );
+  const [errorCode, setErrorCode] = useState('');
+  const [chatgpt, setChatgpt] = useState<ChatGPTStatus | null>(null);
+  const [connection, setConnection] = useState<'chatgpt' | 'api'>('chatgpt');
   const [provider, setProvider] = useState<ProviderConfig | null>(null),
     [consent, setConsent] = useState(false),
     [busy, setBusy] = useState(false),
     [result, setResult] = useState<AskResult | null>(null),
     [error, setError] = useState('');
   useEffect(() => {
-    request<ProviderConfig>('/provider')
-      .then(setProvider)
-      .catch((e) => setError(e.message));
+    let alive = true;
+    if (!DEMO)
+      Promise.all([request<ProviderConfig>('/provider'), request<ChatGPTStatus>('/chatgpt/status')])
+        .then(([apiConfig, account]) => {
+          if (!alive) return;
+          setProvider(apiConfig);
+          setChatgpt(account);
+          setConnection(account.sharing ? 'chatgpt' : apiConfig.configured ? 'api' : 'chatgpt');
+        })
+        .catch((e) => {
+          if (alive) setError(e.message);
+        });
+    return () => {
+      alive = false;
+    };
   }, []);
   async function ask() {
     setBusy(true);
     setError('');
+    setErrorCode('');
     try {
       const answer = await request<AskResult>('/snapshots/' + snapshot.id + '/ask', {
         question,
         processId,
+        provider: connection,
         allowRemote: consent,
-        expectedEndpoint: provider?.endpoint,
+        ...(connection === 'chatgpt'
+          ? { expectedProfileId: chatgpt?.profileId, model: chatgpt?.model }
+          : { expectedEndpoint: provider?.endpoint }),
       });
       if (!mounted.current) return;
       setResult(answer);
@@ -1111,6 +1155,7 @@ export function Tutor({
       });
     } catch (e) {
       setError((e as Error).message);
+      setErrorCode(e instanceof RequestError ? e.code || '' : '');
     } finally {
       setBusy(false);
     }
@@ -1131,20 +1176,60 @@ export function Tutor({
         Qué necesitas conectar
         <textarea rows={3} value={question} onChange={(e) => setQuestion(e.target.value)} />
       </label>
-      {provider && !provider.configured && (
+      <div className="tutor-connection">
+        <label className="field">
+          Usar para esta consulta
+          <select
+            value={connection}
+            onChange={(e) => {
+              setConnection(e.target.value as 'chatgpt' | 'api');
+              setConsent(false);
+              setError('');
+            }}
+          >
+            <option value="chatgpt">Mi plan de ChatGPT</option>
+            <option value="api">API o modelo local configurado</option>
+          </select>
+        </label>
+        {connection === 'chatgpt' && chatgpt?.sharing && (
+          <div className="plan-usage">
+            <span>Usando tu plan de ChatGPT · {chatgpt.model}</span>
+            <button
+              className="text-button"
+              onClick={() =>
+                void openChatGPTPage(CHATGPT_USAGE_URL).catch((e) => setError(e.message))
+              }
+            >
+              Gestionar uso <ArrowUpRight size={13} />
+            </button>
+          </div>
+        )}
+        {connection === 'chatgpt' && !chatgpt?.sharing && (
+          <p className="hint">
+            Conecta tu cuenta y autoriza el uso del plan en los ajustes de Trama.
+          </p>
+        )}
+      </div>
+      {connection === 'api' && provider && !provider.configured && (
         <p className="hint">Configura un modelo en el botón de ajustes de la barra superior.</p>
       )}
-      {provider && !provider.isLocal && (
+      {(connection === 'chatgpt' || (provider && !provider.isLocal)) && (
         <label className="check-field">
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
           Enviar la pregunta y los fragmentos relevantes de esta captura a{' '}
-          {new URL(provider.endpoint).host}
+          {connection === 'chatgpt'
+            ? 'OpenAI usando mi plan de ChatGPT'
+            : new URL(provider!.endpoint).host}
         </label>
       )}
       <Button
         primary
         disabled={
-          busy || !question.trim() || !provider?.configured || (!provider.isLocal && !consent)
+          busy ||
+          !question.trim() ||
+          (connection === 'chatgpt'
+            ? !chatgpt?.sharing || !chatgpt.model || !consent
+            : !provider?.configured || (!provider.isLocal && !consent))
         }
         onClick={ask}
       >
@@ -1154,6 +1239,20 @@ export function Tutor({
       {error && (
         <p className="error" role="alert">
           {error}
+          {connection === 'chatgpt' && (
+            <button
+              className={
+                errorCode === 'subscription_sharing_usage_limit_exceeded'
+                  ? 'button primary'
+                  : 'text-button'
+              }
+              onClick={() =>
+                void openChatGPTPage(CHATGPT_USAGE_URL).catch((e) => setError(e.message))
+              }
+            >
+              Gestionar uso <ArrowUpRight size={13} />
+            </button>
+          )}
         </p>
       )}
       {result && (

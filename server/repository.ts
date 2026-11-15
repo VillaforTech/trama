@@ -17,7 +17,7 @@ const MAX_FILES = 4000,
 const blockedDirectory =
   /^(?:\.git|\.hg|\.svn|\.idea|\.vscode|node_modules|dist|build|\.next|\.nuxt|\.cache|\.venv|venv|__pycache__|vendor|target|\.terraform|\.trama|playwright-report|test-results|lcov-report)$/i;
 const blockedFile =
-  /^(?:\.env(?:\..*)?|\.npmrc|\.pypirc|\.netrc|\.git-credentials|\.dockercfg|id_(?:rsa|dsa|ecdsa|ed25519)(?:\..*)?|credentials(?:\.json)?|auth\.json|application_default_credentials\.json|terraform\.tfstate(?:\..*)?|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb?|poetry\.lock|uv\.lock|Cargo\.lock|Gemfile\.lock)$/i;
+  /^(?:\.env(?:\..*)?|\.npmrc|\.pypirc|\.netrc|\.git-credentials|\.dockercfg|id_(?:rsa|dsa|ecdsa|ed25519)(?:\..*)?|credentials(?:\.json)?|auth\.json|chatgpt-(?:auth|settings|preferences)\.(?:json|lock)(?:\..*)?|application_default_credentials\.json|terraform\.tfstate(?:\..*)?|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb?|poetry\.lock|uv\.lock|Cargo\.lock|Gemfile\.lock)$/i;
 const blockedExtension =
   /\.(?:pem|key|p12|pfx|jks|keystore|sqlite3?|db|db-wal|db-shm|zip|gz|tar|7z|png|jpg|jpeg|gif|webp|ico|woff2?|ttf|otf|mp[34]|wav|pdf|exe|dll|so|dylib|pyc|class|jar|map|lock)$/i;
 const supported =

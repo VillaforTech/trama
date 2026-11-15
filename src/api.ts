@@ -7,6 +7,15 @@ import type {
   SourceFile,
 } from '../shared/types';
 export const DEMO = import.meta.env.VITE_DEMO === 'true';
+export class RequestError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly code?: string,
+  ) {
+    super(message);
+  }
+}
 export async function request<T>(path: string, data?: unknown, method?: string): Promise<T> {
   if (DEMO) return (await import('./demo')).demoRequest(path, data, method) as Promise<T>;
   const response = await fetch('/api' + path, {
@@ -18,7 +27,11 @@ export async function request<T>(path: string, data?: unknown, method?: string):
     .json()
     .catch(() => ({ error: 'La respuesta del servidor está incompleta.' }));
   if (!response.ok)
-    throw new Error(payload.error || payload.message || 'No se pudo completar la operación.');
+    throw new RequestError(
+      payload.error || payload.message || 'No se pudo completar la operación.',
+      response.status,
+      payload.code,
+    );
   return payload as T;
 }
 export const api = {

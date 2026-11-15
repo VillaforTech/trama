@@ -79,6 +79,17 @@ export async function demoRequest(path: string, body?: unknown, method?: string)
     return { jobId };
   }
   if (parts[0] === 'jobs') return jobs.get(id);
+  if (path === '/chatgpt/status')
+    return {
+      available: false,
+      connected: false,
+      sharing: false,
+      model: '',
+      models: [],
+      phase: 'idle',
+      welcomeSeen: true,
+      usageUrl: 'https://chatgpt.com/settings/usage',
+    };
   if (parts[0] === 'provider') {
     if (parts.length === 1 && !body)
       return { endpoint: '', model: '', configured: false, hasKey: false, isLocal: true };

@@ -1,5 +1,5 @@
 import { test, expect, _electron as electron } from '@playwright/test';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -21,6 +21,59 @@ test('macOS app embeds its engine, isolates the renderer and indexes its bundled
       selectFolder: typeof window.tramaDesktop?.selectFolder,
     }));
     expect(platform).toEqual({ bridge: 'darwin', node: 'undefined', selectFolder: 'function' });
+    const chatgpt = await page.evaluate(
+      async () =>
+        await (await fetch('/api/chatgpt/status', { headers: { 'X-Trama-Request': '1' } })).json(),
+    );
+    expect(chatgpt).toMatchObject({ available: true, connected: false, storage: 'encrypted' });
+    const authPath = path.join(data, 'data', 'chatgpt-auth.json');
+    const savedAuth = JSON.parse(await readFile(authPath, 'utf8'));
+    expect(savedAuth).toMatchObject({
+      format: 'trama-chatgpt-keychain-v1',
+      data: expect.any(String),
+    });
+    expect(savedAuth).not.toHaveProperty('hostId');
+    expect((await stat(authPath)).mode & 0o777).toBe(0o600);
+    // Replace only the browser launcher in the main test process. No login occurs.
+    await application.evaluate(({ shell }) => {
+      (globalThis as typeof globalThis & { openedUrls: string[] }).openedUrls = [];
+      shell.openExternal = async (url: string) => {
+        (globalThis as typeof globalThis & { openedUrls: string[] }).openedUrls.push(url);
+      };
+    });
+    const external = await page.evaluate(async () => {
+      const denied: boolean[] = [];
+      for (const url of [
+        'javascript:alert(1)',
+        'file:///tmp/file',
+        'https://evil.test',
+        'https://auth.openai.com.evil.test/api/accounts/authorize',
+        'https://auth.openai.com@evil.test/api/accounts/authorize',
+        'https://auth.openai.com:8443/api/accounts/authorize',
+        'https://chatgpt.com/other',
+      ]) {
+        try {
+          await window.tramaDesktop!.openExternal(url);
+          denied.push(false);
+        } catch {
+          denied.push(true);
+        }
+      }
+      await window.tramaDesktop!.openExternal(
+        'https://auth.openai.com/api/accounts/authorize?client_id=fixture',
+      );
+      await window.tramaDesktop!.openExternal('https://chatgpt.com/settings/usage');
+      return denied;
+    });
+    expect(external.every(Boolean)).toBe(true);
+    expect(
+      await application.evaluate(
+        () => (globalThis as typeof globalThis & { openedUrls: string[] }).openedUrls,
+      ),
+    ).toEqual([
+      'https://auth.openai.com/api/accounts/authorize?client_id=fixture',
+      'https://chatgpt.com/settings/usage',
+    ]);
     const protections = await application.evaluate(({ Menu }) => {
       const appMenu = Menu.getApplicationMenu();
       return {

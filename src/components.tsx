@@ -241,15 +241,16 @@ export function Install() {
       </p>
       <a
         className="button primary"
-        href={REPO + '/releases/latest'}
+        href={REPO + '/blob/main/README.es.md#instalar-en-mac'}
         target="_blank"
         rel="noreferrer"
       >
-        Descargar Trama para Mac <ArrowUpRight size={15} />
+        Instalar Trama para Mac <ArrowUpRight size={15} />
       </a>
       <p className="footnote">
-        Apple Silicon · macOS 13 o posterior. Descarga el ZIP, descomprímelo y mueve Trama a
-        Aplicaciones. Esta versión aún no tiene firma Developer ID ni notarización de Apple.
+        Apple Silicon · macOS 13 o posterior. El código y la guía de instalación están disponibles;
+        la publicación de los instaladores está pendiente. Esta versión aún no tiene firma Developer
+        ID ni notarización de Apple.
       </p>
       <a
         className="text-button"
