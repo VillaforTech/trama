@@ -1,0 +1,50 @@
+name: Incorrect or unreadable map
+description: Report a missing relationship, wrong source, or graph that is difficult to navigate.
+title: '[Map] '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use a small public or synthetic repository. Do not attach a private source capture or access token. A relationship shown by Trama is structural evidence, not a recorded execution trace.
+  - type: input
+    id: version
+    attributes:
+      label: Version and environment
+      description: Trama version or commit, operating system, and window size.
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Where does the problem occur?
+      options:
+        - Missing or incorrect relationship
+        - Incorrect source reference
+        - Grouping or navigation
+        - Search or filtering
+        - Performance or rendering
+        - Coverage or uncertainty label
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Minimal source example
+      description: A public repository link or synthetic files, and the import or declaration that should establish the relationship.
+    validations:
+      required: true
+  - type: textarea
+    id: task
+    attributes:
+      label: What connection are you trying to understand?
+      description: Include your entry point, selected folder or file, filters, and expected result.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened?
+      description: Include visible counts, omitted elements, and an anonymized screenshot if useful.
+    validations:
+      required: true

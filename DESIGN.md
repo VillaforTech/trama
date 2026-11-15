@@ -21,9 +21,9 @@ The distinction between tabs and outline is intentional: tabs select a way of wo
 
 ## Working surfaces
 
-- **Overview:** architecture groups and suggested behaviors provide progressively narrower entry points into the source. Coverage and unresolved evidence remain visible without a large promotional panel.
+- **Overview:** a recommended first behavior and an explicit next action introduce prediction, source inspection and practice. Search and progressive disclosure bound the functionality list. Architecture groups and suggested behaviors provide progressively narrower entry points into the source. Coverage and unresolved evidence remain visible without a large promotional panel.
 - **Reader:** a prediction precedes the explanation. Source declarations, interpretations and missing evidence have distinct labels. References open the exact lines of the captured revision. At widths of 1200 px and above, a nonmodal inspector keeps source alongside the explanation; narrower windows use a focused dialog. Steps run above the document rather than forming another vertical rail. Closing the source restores keyboard focus. The current process remains identifiable when the outline is hidden.
-- **Connections and sources:** the structural map, file browser and source references support the same captured repository. A dependency edge is not presented as an observed execution trace.
+- **Connections and sources:** start with directory groups and progressively open a folder or one file’s dependency neighborhood. Search spans captured paths and extracted symbols; a scope can limit the map to a reading process’s sources. Sixteen nodes per page, visible bounds and a list alternative prevent a large capture from becoming an unreadable canvas. Relation evidence opens at its source line. A dependency edge is not presented as an observed execution trace.
 - **Practice:** a committed response precedes the reference answer. Source consultation and self-assessment are recorded separately. The interface does not turn an assisted answer into proof of independent understanding.
 - **Notebook:** explanations, doubts and attempts persist with their source revision. Changed files can be compared before resuming an investigation.
 

@@ -4,11 +4,27 @@ updates:
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+      day: monday
+    open-pull-requests-limit: 3
+    labels: [dependencies]
+    # Major migrations are reviewed deliberately. Alerts remain enabled so a
+    # security fix requiring a major upgrade can be evaluated separately.
+    ignore:
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
     groups:
+      runtime:
+        dependency-type: production
+        update-types: [minor, patch]
       development:
         dependency-type: development
+        update-types: [minor, patch]
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    open-pull-requests-limit: 2
+    labels: [dependencies]
+    groups:
+      actions:
+        patterns: ['*']

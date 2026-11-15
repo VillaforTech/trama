@@ -1,6 +1,6 @@
 # Product research and design decisions
 
-Checked on 14 November 2026. This document separates observed product capabilities, published learning research, and hypotheses that Trama still needs to test with users.
+Checked on 15 November 2026. This document separates observed product capabilities, published learning research, and hypotheses that Trama still needs to test with users.
 
 ## The problem and the first audience
 
@@ -19,6 +19,34 @@ The product unit is a source-backed investigation of a behavior. An investigatio
 These are documented capabilities, not independent measurements of learning effectiveness. Sources were inspected directly. [LearnHarness README](https://github.com/amosblomqvist/learnharness/blob/cb25c8e49b85eed9e78315584731cad73a0118a6/README.md) · [DeepWiki documentation](https://docs.devin.ai/work-with-devin/deepwiki) · [Cursor codebase guide](https://cursor.com/learn/understanding-your-codebase)
 
 LearnHarness is licensed under AGPL-3.0. Trama uses its learning workflow as a conceptual reference. Trama's implementation and example projects were written independently. No LearnHarness source, prompts, artwork, or branding are bundled. [Original license](https://github.com/amosblomqvist/learnharness/blob/cb25c8e49b85eed9e78315584731cad73a0118a6/LICENSE)
+
+## Graphs for large codebases
+
+The latest feedback exposed two distinct problems: a large diagram becomes unreadable, and a new user cannot tell which action to take next. This is direct feedback from the project's initial user, not a prevalence estimate. A graph model helps represent relationships; useful exploration also requires scope, direction, hierarchy, evidence, and a next task.
+
+### What LearnHarness actually stores
+
+At the inspected `cb25c8e49b85eed9e78315584731cad73a0118a6` revision, LearnHarness models propositions and reasoning chains extracted from teaching sessions or imported notes. A chain connects one or more premises to a conclusion and retains provenance. Its storage adapter uses append-only JSONL ledgers; visual edges are derived from the stored chains. This is a persistent learning graph, not an automatic source-code call graph or a Neo4j deployment. These findings come from the graph contracts and storage implementation, rather than from the product's marketing language. [Graph contracts](https://github.com/amosblomqvist/learnharness/blob/cb25c8e49b85eed9e78315584731cad73a0118a6/src/core/contracts/graph.ts) · [Storage adapter](https://github.com/amosblomqvist/learnharness/blob/cb25c8e49b85eed9e78315584731cad73a0118a6/src/store/graph.ts)
+
+The transferable idea is to keep durable entities, relationships, and provenance separate from a particular picture. Trama's source graph and learning attempts describe different things. Connecting those records should not turn a predicted source relationship into an observed execution or a self-assessment into established mastery. LearnHarness's code remains an AGPL-3.0 reference; its implementation has not been copied into Trama.
+
+### Comparable source-navigation tools
+
+| Source      | Verified capability or guidance                                                                                                                         | Decision for Trama                                                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Sourcegraph | Distinguishes search-based navigation using text and syntax heuristics from precise navigation using compile-time information.                          | Describe the current adapter's evidence honestly. A folder graph cannot supply compiler-level precision that the index does not contain. |
+| Sourcetrail | Provides an interactive source explorer and language-indexer extensions. Its original repository is archived and states that maintenance ended in 2021. | Use focused source exploration as an interaction reference; do not adopt an abandoned runtime as a maintained dependency.                |
+| React Flow  | Recommends memoization, limited initial node trees with expansion, and simpler node/edge styles for large diagrams.                                     | Render a bounded projection, expand relevant scope, and keep the complete snapshot separate from what is visible.                        |
+
+These are documented product and implementation properties, not demonstrated learning results. [Sourcegraph navigation types](https://sourcegraph.com/docs/code-navigation) · [Sourcetrail original repository](https://github.com/CoatiSoftware/Sourcetrail) · [React Flow performance](https://reactflow.dev/learn/advanced-use/performance)
+
+### Current product and architecture decision
+
+Trama retains its local SQLite snapshot and derives organizational groups and bounded source-relationship views. Start at folders, open a relevant group, search for a file or symbol, then inspect a selected file's incoming and outgoing relationships. Aggregated links retain source evidence. A list provides an alternative to the canvas. A notice distinguishes a projected-view limit from incomplete source indexing.
+
+This is an engineering choice for the current single-user app, not a claim that SQLite always outperforms a graph database. The present problem is primarily how much is shown and how the user moves through it. A separate graph database becomes a justified candidate when measured storage or traversal requirements exceed the local design: for example, cross-repository shared graphs, concurrent graph editing, or complex persisted semantic relationships. That decision requires workload measurements, an import/migration plan, and preservation of revision and evidence identity.
+
+The hypothesis is that grouped views and local neighborhoods reduce navigation effort without hiding relevant evidence. Validate it with repositories of different sizes and shapes, including cycles, large folders, disconnected files, and high-degree hubs. Ask a first-time user to locate an entry point, inspect a dependency, find a dependent, and explain the evidence and an omitted uncertainty. Measure correct completion and time; use projection-size and rendering measurements as engineering checks rather than learning outcomes.
 
 ## Bringing a ChatGPT plan
 

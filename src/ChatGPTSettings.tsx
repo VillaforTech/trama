@@ -120,8 +120,9 @@ export default function ChatGPTSettings({ onNotice }: { onNotice: (message: stri
       </header>
       {status && !status.available && (
         <p className="preferences-availability">
-          Conecta ChatGPT desde la aplicación de Mac. En el navegador puedes configurar una API o un
-          modelo local.
+          {window.tramaDesktop
+            ? 'No pudimos abrir el llavero de macOS. Revisa su autorización y vuelve a intentarlo con Continue with ChatGPT.'
+            : 'Conecta ChatGPT desde la aplicación de Mac. En el navegador puedes configurar una API o un modelo local.'}
         </p>
       )}
       {status?.connected ? (
@@ -201,7 +202,11 @@ export default function ChatGPTSettings({ onNotice }: { onNotice: (message: stri
           <button
             className="chatgpt-signin preferences-signin"
             onClick={() => void connect()}
-            disabled={busy || !status?.available}
+            disabled={
+              busy ||
+              (!status?.available &&
+                !(window.tramaDesktop && status?.errorCode === 'chatgpt_storage_unavailable'))
+            }
           >
             {busy ? <Loader2 size={16} className="spin" /> : null}Continue with ChatGPT
           </button>

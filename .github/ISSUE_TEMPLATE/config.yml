@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: How do I use Trama? / ¿Cómo empiezo?
+    url: https://github.com/VillaforTech/trama/blob/main/docs/getting-started.md
+    about: Follow a repository investigation from the first question to independent practice.
+  - name: Questions and discussions / Preguntas
+    url: https://github.com/VillaforTech/trama/discussions
+    about: Ask about workflows, share a public example, or discuss an idea before proposing a change.
+  - name: Report a security vulnerability privately
+    url: https://github.com/VillaforTech/trama/security/advisories/new
+    about: Do not disclose credentials, exploits, or private code in a public issue.

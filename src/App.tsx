@@ -59,6 +59,9 @@ export default function App() {
   const desktop = window.tramaDesktop;
   const [commandOpen, setCommandOpen] = useState(false);
   const [outlineHidden, setOutlineHidden] = useState(false);
+  const [featureQuery, setFeatureQuery] = useState('');
+  const [featureLimit, setFeatureLimit] = useState(12);
+  const [mapPaths, setMapPaths] = useState<string[] | undefined>();
   const projectMenu = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     const outside = (event: PointerEvent) => {
@@ -140,6 +143,9 @@ export default function App() {
     saveFailed.current = draftConflict;
     setSaveIssue(!!draft);
     setSnapshot(value);
+    setFeatureQuery('');
+    setFeatureLimit(12);
+    setMapPaths(undefined);
     setLearning(value.learning);
     setPosition(value);
     setSource(null);
@@ -207,6 +213,7 @@ export default function App() {
   }
   function changeView(next: View, unit = unitId, process = processId, index = stepIndex) {
     setView(next);
+    if (next !== 'map') setMapPaths(undefined);
     setUnitId(unit);
     setProcessId(process);
     setStepIndex(index);
@@ -316,6 +323,21 @@ export default function App() {
     { id: 'practice', title: 'Practicar' },
     { id: 'notebook', title: 'Mi cuaderno' },
   ] as const;
+  const featureMatches = (snapshot?.plan.features || []).filter((feature) =>
+    [feature.title, feature.description, ...feature.sources.map((source) => source.path)]
+      .join(' ')
+      .toLocaleLowerCase()
+      .includes(featureQuery.toLocaleLowerCase().trim()),
+  );
+  const suggestedFeature =
+    snapshot?.plan.features.find(
+      (feature) =>
+        feature.processes.length &&
+        feature.sources.some((source) =>
+          /route|controller|handler|main|pipeline|app\./i.test(source.path),
+        ),
+    ) || snapshot?.plan.features.find((feature) => feature.processes.length);
+  const resumable = activeUnit && activeProcess && snapshot?.learning.position?.view === 'read';
   const feedback = (err: unknown) => setError((err as Error).message);
   return (
     <div
@@ -348,7 +370,11 @@ export default function App() {
           </button>
         )}
         <div className="header-actions">
-          <button className="command-trigger" onClick={() => setCommandOpen(true)}>
+          <button
+            className="command-trigger"
+            aria-label="Buscar acciones y archivos"
+            onClick={() => setCommandOpen(true)}
+          >
             <Search size={14} />
             <span>Buscar</span>
             <kbd>⌘ K</kbd>
@@ -447,9 +473,22 @@ export default function App() {
             >
               Visión general
             </button>
+            <label className="outline-search">
+              Filtrar funcionalidades
+              <input
+                type="search"
+                aria-label="Filtrar funcionalidades"
+                value={featureQuery}
+                onChange={(event) => {
+                  setFeatureQuery(event.target.value);
+                  setFeatureLimit(12);
+                }}
+                placeholder="Nombre o archivo…"
+              />
+            </label>
             <div className="outline-section-title">Funcionalidades</div>
             <div className="outline-items">
-              {snapshot.plan.features.map((feature) => (
+              {featureMatches.slice(0, featureLimit).map((feature) => (
                 <div className="outline-group" key={feature.id}>
                   <button
                     className={
@@ -480,6 +519,14 @@ export default function App() {
                     ))}
                 </div>
               ))}
+              {featureLimit < featureMatches.length && (
+                <button className="outline-more" onClick={() => setFeatureLimit(featureLimit + 12)}>
+                  Mostrar más ({featureMatches.length - featureLimit})
+                </button>
+              )}
+              {!featureMatches.length && (
+                <p className="outline-empty">Sin coincidencias. Prueba otro archivo.</p>
+              )}
             </div>
             <div className="outline-status">
               <button onClick={() => setDialog('scope')}>
@@ -576,6 +623,39 @@ export default function App() {
                     />
                   )}
                 </div>
+                <section className="next-reading" aria-labelledby="next-reading-title">
+                  <div>
+                    <h2 id="next-reading-title">
+                      {resumable ? 'Continúa tu investigación' : 'Empieza por un comportamiento'}
+                    </h2>
+                    <p>
+                      {resumable
+                        ? activeProcess.title
+                        : suggestedFeature?.title || 'Explora las conexiones del proyecto'}
+                      .
+                    </p>
+                    <ol>
+                      <li>Elige qué ocurre y escribe tu predicción.</li>
+                      <li>Sigue el recorrido y abre las líneas que lo justifican.</li>
+                      <li>Resuelve una variante en Practicar y conserva tu explicación.</li>
+                    </ol>
+                  </div>
+                  <div className="next-reading-actions">
+                    {(resumable || suggestedFeature) && (
+                      <Button
+                        primary
+                        onClick={() => (resumable ? changeView('read') : study(suggestedFeature!))}
+                      >
+                        {resumable ? 'Retomar mi lectura' : 'Empezar el recorrido'}{' '}
+                        <ArrowRight size={14} />
+                      </Button>
+                    )}
+                    <button className="text-button" onClick={() => changeView('map')}>
+                      Ver conexiones del sistema
+                    </button>
+                    <small>La lectura y la práctica funcionan sin conectar IA.</small>
+                  </div>
+                </section>
                 <div className="overview-layout">
                   <section>
                     <div className="section-title">
@@ -625,8 +705,20 @@ export default function App() {
                     <h2>Elige qué quieres entender</h2>
                     <span>Funcionalidades y procesos sugeridos</span>
                   </div>
+                  <label className="feature-search">
+                    Buscar una funcionalidad o un archivo
+                    <input
+                      type="search"
+                      placeholder="Por ejemplo: pedidos, autenticación o src/routes…"
+                      value={featureQuery}
+                      onChange={(event) => {
+                        setFeatureQuery(event.target.value);
+                        setFeatureLimit(12);
+                      }}
+                    />
+                  </label>
                   <div className="features">
-                    {snapshot.plan.features.map((f, i) => (
+                    {featureMatches.slice(0, featureLimit).map((f) => (
                       <button key={f.id} onClick={() => study(f)} className="feature-row">
                         <span>
                           <b>{f.title}</b>
@@ -638,6 +730,26 @@ export default function App() {
                         <ArrowRight size={17} />
                       </button>
                     ))}
+                  </div>
+                  {!featureMatches.length && (
+                    <p className="feature-empty">
+                      No hay funcionalidades con ese nombre. Busca en Código y fuentes para
+                      localizar otra entrada.
+                    </p>
+                  )}
+                  <div className="feature-results">
+                    <span>
+                      {Math.min(featureLimit, featureMatches.length)} de {featureMatches.length}{' '}
+                      funcionalidades sugeridas
+                    </span>
+                    {featureLimit < featureMatches.length && (
+                      <button
+                        className="text-button"
+                        onClick={() => setFeatureLimit(featureLimit + 12)}
+                      >
+                        Mostrar 12 más
+                      </button>
+                    )}
                   </div>
                 </section>
               </>
@@ -655,6 +767,18 @@ export default function App() {
                   onStep={(i) => changeView('read', unitId, processId, i)}
                   onProcess={(id) => changeView('read', unitId, id, 0)}
                   onSource={setSource}
+                  onMap={() => {
+                    const paths = [
+                      ...new Set(
+                        [
+                          ...activeProcess.sources,
+                          ...activeProcess.steps.flatMap((step) => step.sources),
+                        ].map((anchor) => anchor.path),
+                      ),
+                    ];
+                    changeView('map');
+                    setMapPaths(paths);
+                  }}
                   onTutor={() => setDialog('tutor')}
                   onPractice={() => changeView('practice')}
                 />
@@ -664,7 +788,12 @@ export default function App() {
                 </Empty>
               ))}
             {view === 'map' && (
-              <MapView key={snapshot.id} snapshot={snapshot} onSource={setSource} />
+              <MapView
+                key={snapshot.id}
+                snapshot={snapshot}
+                onSource={setSource}
+                initialPaths={mapPaths}
+              />
             )}
             {view === 'files' && (
               <Explorer key={snapshot.id} snapshot={snapshot} onSource={setSource} />

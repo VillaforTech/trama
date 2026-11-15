@@ -645,3 +645,116 @@
     max-width: 135px;
   }
 }
+
+.next-reading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 30px;
+  padding: 23px 0;
+  margin: 24px 0 30px;
+  border-top: 1px solid #3c444e;
+  border-bottom: 1px solid #3c444e;
+}
+.next-reading h2 {
+  font-size: 16px;
+  font-weight: 550;
+  color: #e2e8df;
+}
+.next-reading p {
+  margin-top: 6px;
+  color: #c6d29f;
+  font-size: 13px;
+}
+.next-reading ol {
+  padding-left: 18px;
+  margin: 13px 0 0;
+  color: #aeb8c6;
+  font-size: 12px;
+  line-height: 1.85;
+}
+.next-reading-actions {
+  flex: 0 0 205px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding-top: 3px;
+}
+.next-reading-actions small {
+  font-size: 11px;
+  color: #a4afbd;
+  max-width: 28ch;
+}
+.feature-search {
+  display: grid;
+  gap: 7px;
+  color: #afb9c7;
+  font-size: 11px;
+  margin: 15px 0 20px;
+  max-width: 500px;
+}
+.feature-search input {
+  background: #252b33;
+  border: 1px solid #46505c;
+  border-radius: 5px;
+  padding: 9px 12px;
+  font-size: 12px;
+}
+.feature-search input::placeholder,
+.outline-search input::placeholder {
+  color: #a5afbd;
+}
+.feature-results {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 0;
+  font-size: 11px;
+  color: #acb6c4;
+}
+.feature-empty,
+.outline-empty {
+  padding: 15px 8px;
+  font-size: 12px;
+  color: #b5bfce;
+}
+.outline-search {
+  display: grid;
+  gap: 7px;
+  font-size: 10px;
+  color: #aeb8c6;
+  margin: 16px 9px 0;
+}
+.outline-search input {
+  width: 100%;
+  min-width: 0;
+  padding: 7px 8px;
+  font-size: 11px;
+  background: #1d2228;
+  border: 1px solid #424a56;
+  border-radius: 4px;
+}
+.outline-more {
+  text-align: left;
+  font-size: 11px;
+  color: #c4dd77;
+  padding: 12px;
+}
+@media (max-width: 800px) {
+  .next-reading {
+    flex-direction: column;
+    gap: 17px;
+  }
+  .next-reading-actions {
+    flex-basis: auto;
+  }
+}
+@media (min-width: 1200px) {
+  .app.source-open .next-reading {
+    flex-direction: column;
+  }
+  .app.source-open .next-reading-actions {
+    flex-basis: auto;
+  }
+}

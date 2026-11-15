@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
-import { ReactFlow, Background, Controls, MarkerType, type Node, type Edge } from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
+import { lazy, Suspense, useEffect, useMemo, useState, useRef } from 'react';
+const GraphWorkspace = lazy(() => import('./GraphWorkspace'));
 import {
   ArrowLeft,
   ArrowRight,
@@ -48,6 +47,7 @@ export function Reader({
   onSource,
   onTutor,
   onPractice,
+  onMap,
 }: StudyProps &
   Sources & {
     unit: Unit;
@@ -57,6 +57,7 @@ export function Reader({
     onProcess: (id: string) => void;
     onTutor: () => void;
     onPractice: () => void;
+    onMap?: () => void;
   }) {
   const index = Math.min(stepIndex, process.steps.length - 1),
     step = process.steps[index],
@@ -86,6 +87,11 @@ export function Reader({
         <span>/</span>
         {process.title}
       </div>
+      {onMap && (
+        <button className="text-button process-map-link" onClick={onMap}>
+          Ver conexiones de este proceso
+        </button>
+      )}
       <div className="reader-layout">
         <aside className="step-rail">
           <label htmlFor="process-select">Proceso</label>
@@ -346,132 +352,11 @@ function PedidoLab({ snapshot, onSource }: Sources & { snapshot: Snapshot }) {
   );
 }
 
-export function MapView({ snapshot, onSource }: Sources & { snapshot: Snapshot }) {
-  const [focus, setFocus] = useState(''),
-    [filter, setFilter] = useState(''),
-    [selected, setSelected] = useState('');
-  const graph = snapshot.graph;
-  const visible = useMemo(() => {
-    if (focus) {
-      const neighbors = new Set([focus]);
-      graph.edges.forEach((e) => {
-        if (e.source === focus) neighbors.add(e.target);
-        if (e.target === focus) neighbors.add(e.source);
-      });
-      return graph.nodes.filter((n) => neighbors.has(n.id));
-    }
-    return graph.nodes
-      .filter((n) => !filter || n.path.toLowerCase().includes(filter.toLowerCase()))
-      .slice(0, 70);
-  }, [graph, focus, filter]);
-  const ids = new Set(visible.map((n) => n.id));
-  const nodes: Node[] = visible.map((n, i) => ({
-    id: n.id,
-    data: {
-      label: (
-        <>
-          <FileCode2 size={16} />
-          <strong>{n.label}</strong>
-          <small>{n.path}</small>
-          <span>{n.symbols.slice(0, 2).join(' · ') || n.kind}</span>
-        </>
-      ),
-    },
-    position: { x: (i % 3) * 285, y: Math.floor(i / 3) * 155 },
-    className: selected === n.id ? 'selected-file' : '',
-    sourcePosition: 'right' as never,
-    targetPosition: 'left' as never,
-  }));
-  const edges: Edge[] = graph.edges
-    .filter((e) => ids.has(e.source) && ids.has(e.target))
-    .map((e) => ({
-      ...e,
-      label: e.kind,
-      markerEnd: { type: MarkerType.ArrowClosed, color: '#718b69' },
-      style: { stroke: '#718b69' },
-      type: 'smoothstep',
-    }));
-  const active = graph.nodes.find((n) => n.id === selected);
+export function MapView(props: Sources & { snapshot: Snapshot; initialPaths?: string[] }) {
   return (
-    <>
-      <div className="page-heading compact">
-        <div className="breadcrumb">
-          {snapshot.name}
-          <span>/</span>Mapa
-        </div>
-        <h1>Explora las conexiones.</h1>
-        <p>Selecciona un archivo para ver sus símbolos y acercarte a sus dependencias.</p>
-      </div>
-      <div className="map-toolbar">
-        <label className="search-field">
-          <Search size={15} />
-          <input
-            aria-label="Filtrar mapa"
-            value={filter}
-            placeholder="Buscar un archivo…"
-            onChange={(e) => {
-              setFilter(e.target.value);
-              setFocus('');
-            }}
-          />
-        </label>
-        <span>
-          {visible.length} de {graph.nodes.length} archivos
-        </span>
-        {focus && (
-          <button className="text-button" onClick={() => setFocus('')}>
-            Ver todo <ArrowUpRight size={13} />
-          </button>
-        )}
-      </div>
-      <div className="map-canvas">
-        {nodes.length ? (
-          <ReactFlow
-            key={focus + filter}
-            nodes={nodes}
-            edges={edges}
-            fitView
-            nodesConnectable={false}
-            deleteKeyCode={null}
-            onNodeClick={(_, n) => setSelected(n.id)}
-            onNodeDoubleClick={(_, n) => setFocus(n.id)}
-            onEdgeClick={(_, e) => {
-              const origin = graph.edges.find((x) => x.id === e.id),
-                file = graph.nodes.find((x) => x.id === e.source);
-              if (origin && file)
-                onSource({ path: file.path, line: origin.line, end: origin.line, excerpt: '' });
-            }}
-            minZoom={0.18}
-            maxZoom={1.6}
-          >
-            <Background gap={22} size={1} color="#354455" />
-            <Controls showInteractive={false} />
-          </ReactFlow>
-        ) : (
-          <Empty title="No hay archivos que coincidan">Prueba otra parte de la ruta.</Empty>
-        )}
-      </div>
-      {active && (
-        <div className="map-selection">
-          <FileCode2 size={21} />
-          <div>
-            <b>{active.path}</b>
-            <p>{active.symbols.join(' · ') || 'Abre el archivo para leer sus declaraciones.'}</p>
-          </div>
-          <Button onClick={() => setFocus(active.id)}>Ver conexiones</Button>
-          <Button
-            primary
-            onClick={() => onSource({ path: active.path, line: 1, end: 1, excerpt: '' })}
-          >
-            Leer código <ArrowUpRight size={14} />
-          </Button>
-        </div>
-      )}
-      <p className="footnote">
-        Las flechas representan dependencias escritas. Selecciona una flecha para leer su
-        declaración. Haz doble clic en un archivo para centrar sus conexiones.
-      </p>
-    </>
+    <Suspense fallback={<p role="status">Abriendo las conexiones del repositorio…</p>}>
+      <GraphWorkspace {...props} />
+    </Suspense>
   );
 }
 

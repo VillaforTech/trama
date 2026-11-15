@@ -176,7 +176,7 @@ function startEngine() {
       reject(new Error('El motor local tardó demasiado en iniciar.'));
     }, 30000);
     let ready = false;
-    engine.on('message', (message) => {
+    engine.on('message', async (message) => {
       // This channel belongs only to our trusted Node utility process. No renderer IPC
       // exposes encryption or decryption, and credentials never enter web contents.
       if (message?.type === 'trama:secret') {
@@ -190,16 +190,23 @@ function startEngine() {
         )
           return;
         try {
-          if (!safeStorage.isEncryptionAvailable()) throw new Error('unavailable');
+          if (!(await safeStorage.isAsyncEncryptionAvailable())) throw new Error('unavailable');
           const value =
             message.operation === 'available'
               ? 'available'
               : message.operation === 'encrypt'
-                ? safeStorage.encryptString(message.value).toString('base64')
-                : safeStorage.decryptString(Buffer.from(message.value, 'base64'));
-          child?.postMessage({ type: 'trama:secret-result', id: message.id, value });
+                ? (await safeStorage.encryptStringAsync(message.value)).toString('base64')
+                : (await safeStorage.decryptStringAsync(Buffer.from(message.value, 'base64')))
+                    .result;
+          if (child === engine && !quitting)
+            child?.postMessage({ type: 'trama:secret-result', id: message.id, value });
         } catch {
-          child?.postMessage({ type: 'trama:secret-result', id: message.id, error: 'unavailable' });
+          if (child === engine && !quitting)
+            child?.postMessage({
+              type: 'trama:secret-result',
+              id: message.id,
+              error: 'unavailable',
+            });
         }
         return;
       }

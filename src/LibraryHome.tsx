@@ -102,7 +102,7 @@ export default function LibraryHome({
       <header className="library-top">
         <div>
           <h1>Tu biblioteca</h1>
-          <p>Vuelve a un proyecto o empieza con un ejemplo.</p>
+          <p>Abre un repositorio, elige un comportamiento y aprende a explicarlo.</p>
         </div>
         <div className="library-top-actions">
           <button type="button" className="library-secondary" onClick={onGitHub}>

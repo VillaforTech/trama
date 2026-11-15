@@ -42,6 +42,8 @@ jobs:
       - name: Build the Mac app, ZIP and DMG
         run: npm run dist:mac
       - name: Test the packaged Mac application
+        env:
+          TRAMA_VERIFY_SECURE_STORAGE: '1'
         run: TRAMA_ELECTRON_EXECUTABLE="$GITHUB_WORKSPACE/release/mac-arm64/Trama.app/Contents/MacOS/Trama" npm run test:desktop
       - name: Calculate archive checksums
         working-directory: release

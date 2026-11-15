@@ -45,7 +45,19 @@ export interface SourceFile {
   language?: string;
   url?: string;
 }
+export interface GraphAnalysis {
+  version: 1;
+  parsedFiles: number;
+  candidateFiles: number;
+  otherFiles: number;
+  unresolvedLocalImports: number;
+  externalImports: number;
+  dynamicImports: number;
+  limitations: string[];
+}
 export interface Graph {
+  /** Capture-time analysis coverage. Older captures may not contain this field. */
+  analysis?: GraphAnalysis;
   nodes: { id: string; label: string; kind: string; path: string; symbols: string[] }[];
   edges: { id: string; source: string; target: string; kind: string; line: number }[];
 }
